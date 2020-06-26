@@ -1,14 +1,20 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QtDebug>
+
 #include <QDate>
 #include <QLabel>
 #include <QLineEdit>
+#include <QDateEdit>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QCalendar>
+#include <QSpinBox>
+#include <QMessageBox>
 
-#include "BoardItem.h"
+#include "BoardVerticalHeader.h"
+#include "BoardModel.h"
 #include "BoardItemDelegate.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -16,23 +22,27 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow),
     m_actionLoadExcel(NULL),
     m_actionAddMatch(NULL),
-    m_actionDeleteMatch(NULL),
+    m_actionRemoveMatch(NULL),
     m_actionAddPlayer(NULL),
-    m_actionDeletePlayer(NULL)
+    m_actionRemovePlayer(NULL),
+    m_boardModel(NULL),
+    m_boardItemDelegate(NULL)
 {
     ui->setupUi(this);
 
-    connect(ui->pushButtonAddMatch, SIGNAL(pressed()), this, SLOT(addMatch()));
-    connect(ui->pushButtonDeleteMatch, SIGNAL(pressed()), this, SLOT(deleteMatch()));
-    connect(ui->pushButtonAddPlayer, SIGNAL(pressed()), this, SLOT(addPlayer()));
-    connect(ui->pushButtonDeletePlayer, SIGNAL(pressed()), this, SLOT(deletePlayer()));
+    ui->tableViewBoard->setVerticalHeader(new BoardVerticalHeader());
 
-    ui->tableWidgetBoard->setSizeAdjustPolicy(QTableWidget::AdjustToContents);
+    m_boardModel = new BoardModel(&m_matchs, &m_players);
+    ui->tableViewBoard->setModel(m_boardModel);
 
-    ui->tableWidgetBoard->setColumnCount(1);
-    ui->tableWidgetBoard->setHorizontalHeaderItem(0, new BoardItem("Date"));
+    m_boardItemDelegate = new BoardItemDelegate();
+    ui->tableViewBoard->setItemDelegate(m_boardItemDelegate);
 
-    ui->tableWidgetBoard->setItemDelegate(new BoardItemDelegate());
+    ui->tableViewBoard->verticalHeader()->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    ui->tableViewBoard->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+
+    ui->tableViewBoard->horizontalHeader()->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    ui->tableViewBoard->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
 
     createActions();
     setupMenuBar();
@@ -45,19 +55,19 @@ MainWindow::~MainWindow()
 
 void MainWindow::createActions()
 {
-    m_actionLoadExcel = new QAction(tr("Open Excel"), this);
+    m_actionLoadExcel = new QAction(tr("Load Excel"), this);
 
     m_actionAddMatch = new QAction(tr("Add Match"), this);
     connect(m_actionAddMatch, SIGNAL(triggered()), this, SLOT(addMatch()));
 
-    m_actionDeleteMatch = new QAction(tr("Delete Match"), this);
-    connect(m_actionDeleteMatch, SIGNAL(triggered()), this, SLOT(deleteMatch()));
+    m_actionRemoveMatch = new QAction(tr("Remove Match"), this);
+    connect(m_actionRemoveMatch, SIGNAL(triggered()), this, SLOT(removeMatch()));
 
     m_actionAddPlayer = new QAction(tr("Add Player"), this);
     connect(m_actionAddPlayer, SIGNAL(triggered()), this, SLOT(addPlayer()));
 
-    m_actionDeletePlayer = new QAction(tr("Delete Player"), this);
-    connect(m_actionDeletePlayer, SIGNAL(triggered()), this, SLOT(deletePlayer()));
+    m_actionRemovePlayer = new QAction(tr("Remove Player"), this);
+    connect(m_actionRemovePlayer, SIGNAL(triggered()), this, SLOT(removePlayer()));
 }
 
 void MainWindow::setupMenuBar()
@@ -65,25 +75,50 @@ void MainWindow::setupMenuBar()
     QMenu* fileMenu = menuBar()->addMenu(tr("File"));
     fileMenu->addAction(m_actionLoadExcel);
 
-    QMenu* editMenu = menuBar()->addMenu(tr("Edit"));
-    editMenu->addAction(m_actionAddMatch);
-    editMenu->addAction(m_actionDeleteMatch);
-    editMenu->addAction(m_actionAddPlayer);
-    editMenu->addAction(m_actionDeletePlayer);
+    QMenu* matchMenu = menuBar()->addMenu(tr("Match"));
+    matchMenu->addAction(m_actionAddMatch);
+    matchMenu->addAction(m_actionRemoveMatch);
+
+    QMenu* playerMenu = menuBar()->addMenu(tr("Player"));
+    playerMenu->addAction(m_actionAddPlayer);
+    playerMenu->addAction(m_actionRemovePlayer);
 }
 
 void MainWindow::addMatch()
 {
-    int row = ui->tableWidgetBoard->rowCount();
+    QDialog dialog;
+    dialog.setWindowTitle(tr("SHINKI FC Manager"));
+    QDialogButtonBox buttonBox;
+    buttonBox.setStandardButtons(QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
+    connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
 
-    ui->tableWidgetBoard->setRowCount(row+1);
+    dialog.setLayout(new QVBoxLayout());
+    //dialog.layout()->addWidget(new QLabel(tr("Select date")));
 
-    ui->tableWidgetBoard->setItem(row, 0, new BoardItem(QDate::currentDate().toString("yyyy-MM-dd")));
+    QDateEdit* dateEdit = new QDateEdit(QDate::currentDate());
+    dateEdit->setCalendarPopup(true);
+
+    dialog.layout()->addWidget(dateEdit);
+    dialog.layout()->addWidget(&buttonBox);
+
+    if( dialog.exec() == QDialog::Accepted ) {
+        QDate date = dateEdit->date();
+        if( date.isValid() ) {
+            if( !m_boardModel->addMatch(date) ) {
+                QMessageBox msgBox;
+                msgBox.setWindowTitle("SHINKI FC Manager");
+                msgBox.addButton(QMessageBox::Close);
+                msgBox.setText(tr("Already registered"));
+                msgBox.setIcon(QMessageBox::Warning);
+                msgBox.exec();
+            }
+        }
+    }
 }
 
-void MainWindow::deleteMatch()
+void MainWindow::removeMatch()
 {
-
 }
 
 void MainWindow::addPlayer()
@@ -96,24 +131,27 @@ void MainWindow::addPlayer()
     connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
 
     dialog.setLayout(new QVBoxLayout());
-    dialog.layout()->addWidget(new QLabel(tr("Input player name")));
+    //dialog.layout()->addWidget(new QLabel(tr("Input player name")));
+
     QLineEdit* lineEdit = new QLineEdit();
     dialog.layout()->addWidget(lineEdit);
     dialog.layout()->addWidget(&buttonBox);
 
-    dialog.adjustSize();
-
     if( dialog.exec() == QDialog::Accepted ) {
         QString name = lineEdit->text();
         if( !name.isEmpty() ) {
-            int column = ui->tableWidgetBoard->columnCount();
-            ui->tableWidgetBoard->setColumnCount(column+1);
-            ui->tableWidgetBoard->setHorizontalHeaderItem(column, new BoardItem(name));
+            if( !m_boardModel->addPlayer(name) ) {
+                QMessageBox msgBox;
+                msgBox.setWindowTitle("SHINKI FC Manager");
+                msgBox.addButton(QMessageBox::Close);
+                msgBox.setText(tr("Already registered"));
+                msgBox.setIcon(QMessageBox::Warning);
+                msgBox.exec();
+            }
         }
     }
 }
 
-void MainWindow::deletePlayer()
+void MainWindow::removePlayer()
 {
 }
-
