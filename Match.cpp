@@ -56,6 +56,15 @@ Match *Matchs::makeMatch(const QDate &date)
     return result;
 }
 
+void Matchs::removeMatch(const QDate &date)
+{
+    Match* match = this->match(date);
+    if( match != NULL ) {
+        m_matchs.removeOne(match);
+        delete match;
+    }
+}
+
 Match *Matchs::matchAt(int idx)
 {
     Match* result = NULL;
@@ -99,6 +108,20 @@ const Match *Matchs::match(const QDate &date) const
     for( int i = 0; i < m_matchs.count(); i++ ) {
         if( m_matchs.at(i)->Date == date ) {
             result = m_matchs.at(i);
+            break;
+        }
+    }
+
+    return result;
+}
+
+int Matchs::index(const QDate &date) const
+{
+    int result = -1;
+
+    for( int i = 0; i < m_matchs.count(); i++ ) {
+        if( m_matchs.at(i)->Date == date ) {
+            result = i;
             break;
         }
     }

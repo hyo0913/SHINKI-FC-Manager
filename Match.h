@@ -25,11 +25,12 @@ public:
     inline int count() const { return m_matchs.count(); }
     bool exist(const QDate &date) const;
     Match* makeMatch(const QDate &date);
-
+    void removeMatch(const QDate &date);
     Match* matchAt(int idx);
     const Match* matchAt(int idx) const;
     Match* match(const QDate &date);
     const Match* match(const QDate &date) const;
+    int index(const QDate &date) const;
 
 private:
     QList<Match*> m_matchs;

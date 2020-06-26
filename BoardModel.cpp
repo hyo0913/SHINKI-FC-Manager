@@ -6,17 +6,13 @@
 BoardModel::BoardModel(Matchs *matchs, Players *players, QObject *parent) :
     QAbstractTableModel(parent),
     m_matchs(matchs),
-    m_players(players)
+    m_players(players),
+    m_boardItemType(BoardGoal)
 {
 }
 
 BoardModel::~BoardModel()
 {
-}
-
-void BoardModel::setHorizontalHeader(BoardHorizontalHeader *header)
-{
-    m_columnHeader = header;
 }
 
 int BoardModel::rowCount(const QModelIndex &parent) const
@@ -30,7 +26,7 @@ int BoardModel::columnCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
 
-    return m_players->count()*2;
+    return m_players->count();
 }
 
 QVariant BoardModel::data(const QModelIndex &index, int role) const
@@ -42,20 +38,28 @@ QVariant BoardModel::data(const QModelIndex &index, int role) const
     }
 
     if( role == Qt::DisplayRole ) {
-        int column = index.column();
-        if( column == 0 ) { column = 1; }
         const Match* match = m_matchs->matchAt(index.row());
-        const Player* player = m_players->playerAt(column/2);
+        const Player* player = m_players->playerAt(index.column());
 
         if( match != NULL && player != NULL ) {
             if( player->hasMatch(match->Date) ) {
-                if( index.column() % 2 == 0 ) {
-                    result.setValue(player->playData(match->Date)->data("Goal"));
-                } else {
-                    result.setValue(player->playData(match->Date)->data("Assist"));
+
+                switch( m_boardItemType )
+                {
+                case BoardGoal:
+                    result.setValue(player->playData(match->Date)->data(PlayDataItem::itemGoal).toUInt());
+                    break;
+                case BoardAssist:
+                    result.setValue(player->playData(match->Date)->data(PlayDataItem::itemAssist).toUInt());
+                    break;
+                case BoardTotal:
+                    result.setValue(player->playData(match->Date)->data(PlayDataItem::itemGoal).toUInt() + player->playData(match->Date)->data("Assist").toUInt());
+                    break;
+                default:
+                    ;
                 }
             } else {
-                // empty variant
+                result.setValue(tr("no play"));
             }
         }
     } else if( role == Qt::TextAlignmentRole ) {
@@ -67,7 +71,35 @@ QVariant BoardModel::data(const QModelIndex &index, int role) const
 
 bool BoardModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    return true;
+    if( !index.isValid() ) {
+        return false;
+    }
+
+    bool result = false;
+
+    if( role == Qt::EditRole ) {
+        Match* match = m_matchs->matchAt(index.row());
+        Player* player = m_players->playerAt(index.column());
+
+        if( match != NULL && player != NULL ) {
+            if( player->hasMatch(match->Date) ) {
+                result = true;
+                switch( m_boardItemType )
+                {
+                case BoardGoal:
+                    player->playData(match->Date)->setData(PlayDataItem::itemGoal, value);
+                    break;
+                case BoardAssist:
+                    player->playData(match->Date)->setData(PlayDataItem::itemAssist, value);
+                    break;
+                default:
+                    result = false;
+                }
+            }
+        }
+    }
+
+    return result;
 }
 
 QVariant BoardModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -76,10 +108,8 @@ QVariant BoardModel::headerData(int section, Qt::Orientation orientation, int ro
 
     if( role == Qt::DisplayRole ) {
         if( orientation == Qt::Horizontal ) {
-            if( section % 2 == 0 ) {
-                result.setValue(tr("Goal"));
-            } else {
-                result.setValue(tr("Assist"));
+            if( section < m_players->count() ) {
+                result.setValue(m_players->playerAt(section)->name());
             }
         } else if( orientation == Qt::Vertical ) {
             if( section < m_matchs->count() ) {
@@ -97,6 +127,13 @@ Qt::ItemFlags BoardModel::flags(const QModelIndex &index) const
         return Qt::ItemIsEnabled;
     }
 
+    const Match* match = m_matchs->matchAt(index.row());
+    const Player* player = m_players->playerAt(index.column());
+
+    if( match == NULL || player == NULL || !player->hasMatch(match->Date) ) {
+        return QAbstractTableModel::flags(index) & (~Qt::ItemIsEditable);
+    }
+
     return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
 }
 
@@ -105,20 +142,33 @@ bool BoardModel::addMatch(const QDate &date)
     if( m_matchs->exist(date) ) { return false; }
 
     int row = this->rowCount();
-    beginInsertRows(QModelIndex(), row, row);
+    this->beginInsertRows(QModelIndex(), row, row);
 
     m_matchs->makeMatch(date);
 
     this->insertRow(row);
 
-    endInsertRows();
+    this->endInsertRows();
 
     return true;
 }
 
-void BoardModel::removeMatch(const QDate &date)
+bool BoardModel::removeMatch(const QDate &date)
 {
+    if( !m_matchs->exist(date) ) { return false; }
 
+    int idx = m_matchs->index(date);
+    if( idx < 0 ) { return false; }
+
+    this->beginRemoveRows(QModelIndex(), idx, idx);
+
+    m_matchs->removeMatch(date);
+
+    this->removeRow(idx, QModelIndex());
+
+    this->endRemoveRows();
+
+    return true;
 }
 
 bool BoardModel::addPlayer(const QString &name)
@@ -126,18 +176,42 @@ bool BoardModel::addPlayer(const QString &name)
     if( m_players->exist(name) ) { return false; }
 
     int column = this->columnCount();
-    beginInsertColumns(QModelIndex(), column, column+1);
+    this->beginInsertColumns(QModelIndex(), column, column);
 
     m_players->makePalyer(name);
 
     this->insertColumn(column);
 
-    endInsertColumns();
+    this->endInsertColumns();
 
     return true;
 }
 
-void BoardModel::removePlayer(const QString &name)
+bool BoardModel::removePlayer(const QString &name)
 {
+    if( !m_players->exist(name) ) { return false; }
 
+    int idx = m_players->index(name);
+    if( idx < 0 ) { return false; }
+
+    this->beginRemoveColumns(QModelIndex(), idx, idx);
+
+    m_players->removePlayer(name);
+
+    this->removeColumn(idx, QModelIndex());
+
+    this->endRemoveColumns();
+
+    return true;
+}
+
+void BoardModel::setViewItem(BoardModel::BoardItemType type)
+{
+    bool reset = (m_boardItemType != type) ? true : false;
+
+    if( reset ) { this->beginResetModel(); }
+
+    m_boardItemType = type;
+
+    if( reset ) { this->endResetModel(); }
 }

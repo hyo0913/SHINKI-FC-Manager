@@ -11,10 +11,7 @@ QT_END_NAMESPACE
 #include "Match.h"
 #include "Player.h"
 
-#include "BoardHeader.h"
-
 class BoardModel;
-class BoardItemDelegate;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -26,12 +23,15 @@ public:
 private:
     Ui::MainWindow *ui;
 
-    QAction* m_actionLoadExcel;
+    QMenu* m_menuBoardTable;
 
+    QAction* m_actionImportExcel;
     QAction* m_actionAddMatch;
     QAction* m_actionRemoveMatch;
     QAction* m_actionAddPlayer;
     QAction* m_actionRemovePlayer;
+    QAction* m_actionCreatePlayData;
+    QAction* m_actionDeletePlayData;
 
     Matchs m_matchs;
     Players m_players;
@@ -46,5 +46,16 @@ private slots:
     void removeMatch();
     void addPlayer();
     void removePlayer();
+
+    void createPlayData();
+    void deletePlayData();
+
+    void viewGoal();
+    void viewAssist();
+    void viewTotal();
+
+    void boardVerticalContextMenu(const QPoint &pos);
+    void boardHorizontalContextMenu(const QPoint &pos);
+    void boardTableContextMenu(const QPoint &pos);
 };
 #endif // MAINWINDOW_H

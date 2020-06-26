@@ -13,53 +13,46 @@
 #include <QSpinBox>
 #include <QMessageBox>
 
-#include "BoardHeader.h"
 #include "BoardModel.h"
 #include "BoardItemDelegate.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_actionLoadExcel(NULL),
+    m_menuBoardTable(new QMenu(this)),
+    m_actionImportExcel(NULL),
     m_actionAddMatch(NULL),
     m_actionRemoveMatch(NULL),
     m_actionAddPlayer(NULL),
     m_actionRemovePlayer(NULL),
+    m_actionCreatePlayData(NULL),
+    m_actionDeletePlayData(NULL),
     m_boardModel(NULL)
 {
     ui->setupUi(this);
 
-    // header
-    QFrame* headerFrame = new QFrame();
-    headerFrame->setFrameShape(QFrame::StyledPanel);
-    headerFrame->setFrameShadow(QFrame::Sunken);
-    headerFrame->setLineWidth(1);
-    headerFrame->setMidLineWidth(0);
-    headerFrame->setLayout(new QHBoxLayout());
-    headerFrame->layout()->setMargin(0);
+    createActions();
+    setupMenuBar();
 
-    BoardHorizontalHeader* columnHeader = new BoardHorizontalHeader();
-    headerFrame->layout()->addWidget(columnHeader);
-
-    ui->verticalLayout->insertWidget(0, headerFrame);
-
-    connect(ui->tableViewBoard->verticalHeader(), SIGNAL(sectionResized(int, int, int)), columnHeader, SLOT(sectionResize(int, int, int)));
-
-    // board, model
     m_boardModel = new BoardModel(&m_matchs, &m_players);
     ui->tableViewBoard->setModel(m_boardModel);
     ui->tableViewBoard->setItemDelegate(new BoardItemDelegate());
 
-    ui->tableViewBoard->verticalHeader()->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
-    ui->tableViewBoard->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    ui->tableViewBoard->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->tableViewBoard->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
-    ui->tableViewBoard->horizontalHeader()->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
-    ui->tableViewBoard->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    connect(ui->radioButtonViewGoal, SIGNAL(clicked(bool)), this, SLOT(viewGoal()));
+    connect(ui->radioButtonViewAssist, SIGNAL(clicked(bool)), this, SLOT(viewAssist()));
+    connect(ui->radioButtonViewTotal, SIGNAL(clicked(bool)), this, SLOT(viewTotal()));
 
-    m_boardModel->setHorizontalHeader(columnHeader);
+    ui->tableViewBoard->verticalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->tableViewBoard->verticalHeader(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(boardVerticalContextMenu(QPoint)));
 
-    createActions();
-    setupMenuBar();
+    ui->tableViewBoard->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->tableViewBoard->horizontalHeader(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(boardHorizontalContextMenu(QPoint)));
+
+    ui->tableViewBoard->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->tableViewBoard, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(boardTableContextMenu(QPoint)));
 
     m_boardModel->addMatch(QDate(2020, 06, 01));
     m_boardModel->addMatch(QDate(2020, 06, 02));
@@ -77,7 +70,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::createActions()
 {
-    m_actionLoadExcel = new QAction(tr("Load Excel"), this);
+    m_actionImportExcel = new QAction(tr("Import"), this);
 
     m_actionAddMatch = new QAction(tr("Add Match"), this);
     connect(m_actionAddMatch, SIGNAL(triggered()), this, SLOT(addMatch()));
@@ -90,12 +83,18 @@ void MainWindow::createActions()
 
     m_actionRemovePlayer = new QAction(tr("Remove Player"), this);
     connect(m_actionRemovePlayer, SIGNAL(triggered()), this, SLOT(removePlayer()));
+
+    m_actionCreatePlayData = new QAction(tr("Create Play Data"), this);
+    connect(m_actionCreatePlayData, SIGNAL(triggered()), this, SLOT(createPlayData()));
+
+    m_actionDeletePlayData = new QAction(tr("Delete Play Data"), this);
+    connect(m_actionDeletePlayData, SIGNAL(triggered()), this, SLOT(deletePlayData()));
 }
 
 void MainWindow::setupMenuBar()
 {
     QMenu* fileMenu = menuBar()->addMenu(tr("File"));
-    fileMenu->addAction(m_actionLoadExcel);
+    fileMenu->addAction(m_actionImportExcel);
 
     QMenu* matchMenu = menuBar()->addMenu(tr("Match"));
     matchMenu->addAction(m_actionAddMatch);
@@ -141,6 +140,23 @@ void MainWindow::addMatch()
 
 void MainWindow::removeMatch()
 {
+    while( true )
+    {
+        QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedRows();
+        if( indexList.count() <= 0 ) {
+            break;
+        }
+
+        QModelIndex index = indexList.takeFirst();
+        if( !index.isValid() ) {
+            break;
+        }
+
+        const QDate &date = m_matchs.matchAt(index.row())->Date;
+        if( !m_boardModel->removeMatch(date) ) {
+            break;
+        }
+    }
 }
 
 void MainWindow::addPlayer()
@@ -176,4 +192,127 @@ void MainWindow::addPlayer()
 
 void MainWindow::removePlayer()
 {
+    while( true )
+    {
+        QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedColumns();
+        if( indexList.count() <= 0 ) {
+            break;
+        }
+
+        QModelIndex index = indexList.takeFirst();
+        if( !index.isValid() ) {
+            break;
+        }
+
+        const QString &name = m_players.playerAt(index.column())->name();
+        if( !m_boardModel->removePlayer(name) ) {
+            break;
+        }
+    }
+}
+
+void MainWindow::createPlayData()
+{
+    QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedIndexes();
+    while( indexList.count() > 0 ) {
+        QModelIndex index = indexList.takeFirst();
+        if( !index.isValid() ) { continue; }
+
+        Match* match = m_matchs.matchAt(index.row());
+        Player* player = m_players.playerAt(index.column());
+
+        if( !player->hasMatch(match->Date) ) {
+            if( match->Players.contains(player->name()) ) {
+                match->Players << player->name();
+            }
+            PlayData* playData = player->addMatch(match->Date);
+            if( playData != nullptr ) {
+                QVariant temp;
+                temp.setValue(0);
+                playData->setData(PlayDataItem::itemGoal, temp);
+                playData->setData(PlayDataItem::itemAssist, temp);
+            }
+        }
+    }
+}
+
+void MainWindow::deletePlayData()
+{
+    QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedIndexes();
+    while( indexList.count() > 0 ) {
+        QModelIndex index = indexList.takeFirst();
+        if( !index.isValid() ) { continue; }
+
+        Match* match = m_matchs.matchAt(index.row());
+        Player* player = m_players.playerAt(index.column());
+
+        if( player->hasMatch(match->Date) ) {
+            if( match->Players.contains(player->name()) ) {
+                match->Players.removeOne(player->name());
+            }
+            player->removeMatch(match->Date);
+        }
+    }
+}
+
+void MainWindow::viewGoal()
+{
+    m_boardModel->setViewItem(BoardModel::BoardGoal);
+}
+
+void MainWindow::viewAssist()
+{
+    m_boardModel->setViewItem(BoardModel::BoardAssist);
+}
+
+void MainWindow::viewTotal()
+{
+    m_boardModel->setViewItem(BoardModel::BoardTotal);
+}
+
+void MainWindow::boardVerticalContextMenu(const QPoint &pos)
+{
+    if( pos.isNull() ) { return; }
+
+    QModelIndex index = ui->tableViewBoard->indexAt(pos);
+    if( index.isValid() && ui->tableViewBoard->selectionModel()->isRowSelected(index.row(), QModelIndex()) ) {
+        m_menuBoardTable->clear();
+        m_menuBoardTable->addAction(m_actionRemoveMatch);
+
+        m_menuBoardTable->popup(ui->tableViewBoard->mapToGlobal(pos));
+    }
+}
+
+void MainWindow::boardHorizontalContextMenu(const QPoint &pos)
+{
+    if( pos.isNull() ) { return; }
+
+    QModelIndex index = ui->tableViewBoard->indexAt(pos);
+    if( index.isValid() && ui->tableViewBoard->selectionModel()->isColumnSelected(index.column(), QModelIndex()) ) {
+        m_menuBoardTable->clear();
+        m_menuBoardTable->addAction(m_actionRemovePlayer);
+
+        m_menuBoardTable->popup(ui->tableViewBoard->mapToGlobal(pos));
+    }
+}
+
+void MainWindow::boardTableContextMenu(const QPoint &pos)
+{
+    if( pos.isNull() ) { return; }
+
+    QModelIndex index = ui->tableViewBoard->indexAt(pos);
+    if( !index.isValid() ) { return; }
+
+    const Match* match = m_matchs.matchAt(index.row());
+    const Player* player = m_players.playerAt(index.column());
+
+    if( !player->hasMatch(match->Date) ) {
+        m_menuBoardTable->clear();
+        m_menuBoardTable->addAction(m_actionCreatePlayData);
+    } else {
+        m_menuBoardTable->clear();
+        m_menuBoardTable->addAction(m_actionDeletePlayData);
+    }
+
+    m_menuBoardTable->popup(ui->tableViewBoard->mapToGlobal(pos));
 }

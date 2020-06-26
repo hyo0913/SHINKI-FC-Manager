@@ -108,6 +108,15 @@ Player *Players::makePalyer(const QString &name)
     return result;
 }
 
+void Players::removePlayer(const QString &name)
+{
+    Player* player = this->player(name);
+    if( player != NULL ) {
+        m_players.removeOne(player);
+        delete player;
+    }
+}
+
 Player *Players::playerAt(int idx)
 {
     Player* result = NULL;
@@ -151,6 +160,20 @@ const Player *Players::player(const QString &name) const
     for( int i = 0; i < m_players.count(); i++ ) {
         if( m_players.at(i)->name() == name ) {
             result = m_players.at(i);
+            break;
+        }
+    }
+
+    return result;
+}
+
+int Players::index(const QString &name) const
+{
+    int result = -1;
+
+    for( int i = 0; i < m_players.count(); i++ ) {
+        if( m_players.at(i)->name() == name ) {
+            result = i;
             break;
         }
     }

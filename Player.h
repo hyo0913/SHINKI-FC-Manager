@@ -5,6 +5,12 @@
 #include <QVariant>
 #include <QDate>
 
+namespace PlayDataItem {
+const QString itemGoal = "Goal";
+const QString itemAssist = "Assist";
+const QString itemTotal = "Total";
+}
+
 class PlayData
 {
 public:
@@ -51,10 +57,12 @@ public:
     inline int count() const { return m_players.count(); }
     bool exist(const QString &name) const;
     Player* makePalyer(const QString &name);
+    void removePlayer(const QString &name);
     Player* playerAt(int idx);
     const Player* playerAt(int idx) const;
     Player* player(const QString &name);
     const Player* player(const QString &name) const;
+    int index(const QString &name) const;
 
 private:
     QList<Player*> m_players;

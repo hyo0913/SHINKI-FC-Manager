@@ -16,50 +16,6 @@ BoardItemDelegate::~BoardItemDelegate()
 {
 }
 
-/*
-void BoardItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
-{
-    if( index.isValid() ) {
-        if( index.column() == 0 ) {
-            painter->save();
-
-            QPen pen;
-            pen.setWidth(1);
-            pen.setColor(Qt::black);
-            pen.setStyle(Qt::SolidLine);
-            painter->setPen(pen);
-
-            painter->drawText(option.rect, 0, tr("Goal\nAssist"));
-
-            painter->restore();
-        } else {
-            if( index.data().canConvert<PlayData>() ) {
-                PlayData data = qvariant_cast<PlayData>(index.data());
-
-                QVariant goal = data.data("Goal");
-                QVariant assist = data.data("Assist");
-
-                painter->save();
-
-                QPen pen;
-                pen.setWidth(1);
-                pen.setColor(Qt::black);
-                pen.setStyle(Qt::SolidLine);
-                painter->setPen(pen);
-
-                painter->drawText(option.rect, option.index.flags(), goal.toString());
-
-                painter->restore();
-            } else {
-                QItemDelegate::paint(painter, option, index);
-            }
-        }
-    } else {
-        QItemDelegate::paint(painter, option, index);
-    }
-}
-*/
-
 QWidget *BoardItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     if( index.isValid() ) {
