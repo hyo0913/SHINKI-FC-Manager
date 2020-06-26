@@ -16,6 +16,7 @@ BoardItemDelegate::~BoardItemDelegate()
 {
 }
 
+/*
 void BoardItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     if( index.isValid() ) {
@@ -57,6 +58,7 @@ void BoardItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
         QItemDelegate::paint(painter, option, index);
     }
 }
+*/
 
 QWidget *BoardItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {

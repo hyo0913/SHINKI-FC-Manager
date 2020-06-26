@@ -13,7 +13,7 @@
 #include <QSpinBox>
 #include <QMessageBox>
 
-#include "BoardVerticalHeader.h"
+#include "BoardHeader.h"
 #include "BoardModel.h"
 #include "BoardItemDelegate.h"
 
@@ -25,18 +25,30 @@ MainWindow::MainWindow(QWidget *parent) :
     m_actionRemoveMatch(NULL),
     m_actionAddPlayer(NULL),
     m_actionRemovePlayer(NULL),
-    m_boardModel(NULL),
-    m_boardItemDelegate(NULL)
+    m_boardModel(NULL)
 {
     ui->setupUi(this);
 
-    ui->tableViewBoard->setVerticalHeader(new BoardVerticalHeader());
+    // header
+    QFrame* headerFrame = new QFrame();
+    headerFrame->setFrameShape(QFrame::StyledPanel);
+    headerFrame->setFrameShadow(QFrame::Sunken);
+    headerFrame->setLineWidth(1);
+    headerFrame->setMidLineWidth(0);
+    headerFrame->setLayout(new QHBoxLayout());
+    headerFrame->layout()->setMargin(0);
 
+    BoardHorizontalHeader* columnHeader = new BoardHorizontalHeader();
+    headerFrame->layout()->addWidget(columnHeader);
+
+    ui->verticalLayout->insertWidget(0, headerFrame);
+
+    connect(ui->tableViewBoard->verticalHeader(), SIGNAL(sectionResized(int, int, int)), columnHeader, SLOT(sectionResize(int, int, int)));
+
+    // board, model
     m_boardModel = new BoardModel(&m_matchs, &m_players);
     ui->tableViewBoard->setModel(m_boardModel);
-
-    m_boardItemDelegate = new BoardItemDelegate();
-    ui->tableViewBoard->setItemDelegate(m_boardItemDelegate);
+    ui->tableViewBoard->setItemDelegate(new BoardItemDelegate());
 
     ui->tableViewBoard->verticalHeader()->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     ui->tableViewBoard->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
@@ -44,8 +56,18 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableViewBoard->horizontalHeader()->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     ui->tableViewBoard->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
 
+    m_boardModel->setHorizontalHeader(columnHeader);
+
     createActions();
     setupMenuBar();
+
+    m_boardModel->addMatch(QDate(2020, 06, 01));
+    m_boardModel->addMatch(QDate(2020, 06, 02));
+    m_boardModel->addMatch(QDate(2020, 06, 03));
+
+    m_boardModel->addPlayer(QString::fromUtf8("숡퀴"));
+    m_boardModel->addPlayer(QString::fromUtf8("읽퀴"));
+    m_boardModel->addPlayer(QString::fromUtf8("횱퀴"));
 }
 
 MainWindow::~MainWindow()

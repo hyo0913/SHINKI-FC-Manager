@@ -11,6 +11,8 @@ QT_END_NAMESPACE
 #include "Match.h"
 #include "Player.h"
 
+#include "BoardHeader.h"
+
 class BoardModel;
 class BoardItemDelegate;
 class MainWindow : public QMainWindow
@@ -35,7 +37,6 @@ private:
     Players m_players;
 
     BoardModel* m_boardModel;
-    BoardItemDelegate* m_boardItemDelegate;
 
     void createActions();
     void setupMenuBar();

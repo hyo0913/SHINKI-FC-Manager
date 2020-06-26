@@ -14,6 +14,11 @@ BoardModel::~BoardModel()
 {
 }
 
+void BoardModel::setHorizontalHeader(BoardHorizontalHeader *header)
+{
+    m_columnHeader = header;
+}
+
 int BoardModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
@@ -25,7 +30,7 @@ int BoardModel::columnCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
 
-    return m_players->count()+1;
+    return m_players->count()*2;
 }
 
 QVariant BoardModel::data(const QModelIndex &index, int role) const
@@ -37,12 +42,18 @@ QVariant BoardModel::data(const QModelIndex &index, int role) const
     }
 
     if( role == Qt::DisplayRole ) {
+        int column = index.column();
+        if( column == 0 ) { column = 1; }
         const Match* match = m_matchs->matchAt(index.row());
-        const Player* player = m_players->playerAt(index.column()-1);
+        const Player* player = m_players->playerAt(column/2);
 
         if( match != NULL && player != NULL ) {
             if( player->hasMatch(match->Date) ) {
-                result.setValue(*player->playData(match->Date));
+                if( index.column() % 2 == 0 ) {
+                    result.setValue(player->playData(match->Date)->data("Goal"));
+                } else {
+                    result.setValue(player->playData(match->Date)->data("Assist"));
+                }
             } else {
                 // empty variant
             }
@@ -65,8 +76,10 @@ QVariant BoardModel::headerData(int section, Qt::Orientation orientation, int ro
 
     if( role == Qt::DisplayRole ) {
         if( orientation == Qt::Horizontal ) {
-            if( 0 < section && section <= m_players->count() ) {
-                result.setValue(m_players->playerAt(section-1)->name());
+            if( section % 2 == 0 ) {
+                result.setValue(tr("Goal"));
+            } else {
+                result.setValue(tr("Assist"));
             }
         } else if( orientation == Qt::Vertical ) {
             if( section < m_matchs->count() ) {
@@ -80,7 +93,7 @@ QVariant BoardModel::headerData(int section, Qt::Orientation orientation, int ro
 
 Qt::ItemFlags BoardModel::flags(const QModelIndex &index) const
 {
-    if( !index.isValid() || index.column() == 0 ) {
+    if( !index.isValid() ) {
         return Qt::ItemIsEnabled;
     }
 
@@ -113,7 +126,7 @@ bool BoardModel::addPlayer(const QString &name)
     if( m_players->exist(name) ) { return false; }
 
     int column = this->columnCount();
-    beginInsertColumns(QModelIndex(), column, column);
+    beginInsertColumns(QModelIndex(), column, column+1);
 
     m_players->makePalyer(name);
 
@@ -127,13 +140,4 @@ bool BoardModel::addPlayer(const QString &name)
 void BoardModel::removePlayer(const QString &name)
 {
 
-}
-
-void BoardModel::changeViewItem(BoardModel::BoardViewType type)
-{
-    this->beginResetModel();
-
-    m_viewType = type;
-
-    this->endResetModel();
 }

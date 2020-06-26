@@ -3,6 +3,8 @@
 
 #include <QAbstractTableModel>
 
+#include "BoardHeader.h"
+
 class Matchs;
 class Players;
 class BoardModel : public QAbstractTableModel
@@ -20,6 +22,8 @@ public:
     BoardModel(Matchs *matchs, Players *players, QObject *parent = nullptr);
     ~BoardModel();
 
+    void setHorizontalHeader(BoardHorizontalHeader *header);
+
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
@@ -36,14 +40,11 @@ public:
     bool addPlayer(const QString &name);
     void removePlayer(const QString &name);
 
-    void changeViewItem(BoardViewType type);
-
 private:
     Matchs* m_matchs;
     Players* m_players;
 
-    BoardViewType m_viewType;
-
+    BoardHorizontalHeader* m_columnHeader;
 
     QDate getMatchDate(int row) const;
     QString getPlayerName(int column) const;
