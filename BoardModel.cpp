@@ -19,7 +19,7 @@ int BoardModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
 
-    return m_matchs->count();
+    return m_matchs->count()+1;
 }
 
 int BoardModel::columnCount(const QModelIndex &parent) const
@@ -38,28 +38,45 @@ QVariant BoardModel::data(const QModelIndex &index, int role) const
     }
 
     if( role == Qt::DisplayRole ) {
-        const Match* match = m_matchs->matchAt(index.row());
-        const Player* player = m_players->playerAt(index.column());
+        if( index.row() == m_matchs->count() ) {
+            // total
+            int i = 0;
+            quint64 value;
+            switch( m_boardItemType )
+            {
+            case BoardGoal:
+                break;
+            case BoardAssist:
+                break;
+            case BoardTotal:
+                break;
+            default:
+                ;
+            }
+        } else {
+            const Match* match = m_matchs->matchAt(index.row());
+            const Player* player = m_players->playerAt(index.column());
 
-        if( match != NULL && player != NULL ) {
-            if( player->hasMatch(match->Date) ) {
+            if( match != NULL && player != NULL ) {
+                if( player->hasMatch(match->Date) ) {
 
-                switch( m_boardItemType )
-                {
-                case BoardGoal:
-                    result.setValue(player->playData(match->Date)->data(PlayDataItem::itemGoal).toUInt());
-                    break;
-                case BoardAssist:
-                    result.setValue(player->playData(match->Date)->data(PlayDataItem::itemAssist).toUInt());
-                    break;
-                case BoardTotal:
-                    result.setValue(player->playData(match->Date)->data(PlayDataItem::itemGoal).toUInt() + player->playData(match->Date)->data("Assist").toUInt());
-                    break;
-                default:
-                    ;
+                    switch( m_boardItemType )
+                    {
+                    case BoardGoal:
+                        result.setValue(player->playData(match->Date)->data(PlayDataItem::itemGoal).toUInt());
+                        break;
+                    case BoardAssist:
+                        result.setValue(player->playData(match->Date)->data(PlayDataItem::itemAssist).toUInt());
+                        break;
+                    case BoardTotal:
+                        result.setValue(player->playData(match->Date)->data(PlayDataItem::itemGoal).toUInt() + player->playData(match->Date)->data("Assist").toUInt());
+                        break;
+                    default:
+                        ;
+                    }
+                } else {
+                    result.setValue(tr("no play"));
                 }
-            } else {
-                result.setValue(tr("no play"));
             }
         }
     } else if( role == Qt::TextAlignmentRole ) {
@@ -112,7 +129,9 @@ QVariant BoardModel::headerData(int section, Qt::Orientation orientation, int ro
                 result.setValue(m_players->playerAt(section)->name());
             }
         } else if( orientation == Qt::Vertical ) {
-            if( section < m_matchs->count() ) {
+            if( section == m_matchs->count() ) {
+                result.setValue(tr("Total"));
+            } else {
                 result.setValue(m_matchs->matchAt(section)->Date.toString("yyyy-MM-dd"));
             }
         }

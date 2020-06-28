@@ -275,7 +275,9 @@ void MainWindow::boardVerticalContextMenu(const QPoint &pos)
     if( pos.isNull() ) { return; }
 
     QModelIndex index = ui->tableViewBoard->indexAt(pos);
-    if( index.isValid() && ui->tableViewBoard->selectionModel()->isRowSelected(index.row(), QModelIndex()) ) {
+    if( !index.isValid() || index.row() == m_matchs.count() ) { return; }
+
+    if( ui->tableViewBoard->selectionModel()->isRowSelected(index.row(), QModelIndex()) ) {
         m_menuBoardTable->clear();
         m_menuBoardTable->addAction(m_actionRemoveMatch);
 
@@ -288,7 +290,9 @@ void MainWindow::boardHorizontalContextMenu(const QPoint &pos)
     if( pos.isNull() ) { return; }
 
     QModelIndex index = ui->tableViewBoard->indexAt(pos);
-    if( index.isValid() && ui->tableViewBoard->selectionModel()->isColumnSelected(index.column(), QModelIndex()) ) {
+    if( !index.isValid() || index.row() == m_matchs.count() ) { return; }
+
+    if( ui->tableViewBoard->selectionModel()->isColumnSelected(index.column(), QModelIndex()) ) {
         m_menuBoardTable->clear();
         m_menuBoardTable->addAction(m_actionRemovePlayer);
 
@@ -301,7 +305,7 @@ void MainWindow::boardTableContextMenu(const QPoint &pos)
     if( pos.isNull() ) { return; }
 
     QModelIndex index = ui->tableViewBoard->indexAt(pos);
-    if( !index.isValid() ) { return; }
+    if( !index.isValid() || index.row() == m_matchs.count() ) { return; }
 
     const Match* match = m_matchs.matchAt(index.row());
     const Player* player = m_players.playerAt(index.column());
