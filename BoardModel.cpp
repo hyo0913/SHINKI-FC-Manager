@@ -38,22 +38,50 @@ QVariant BoardModel::data(const QModelIndex &index, int role) const
     }
 
     if( role == Qt::DisplayRole ) {
-        if( index.row() == m_matchs->count() ) {
-            // total
+        if( index.row() == m_matchs->count() ) {    // total
             int i = 0;
-            quint64 value;
+            quint64 value = 0;
             switch( m_boardItemType )
             {
             case BoardGoal:
+                for( ; i < m_matchs->count(); i++ ) {
+                    const Match* match = m_matchs->matchAt(i);
+                    const Player* player = m_players->playerAt(index.column());
+                    if( match == NULL || player == NULL ) { continue; }
+
+                    if( player->hasMatch(match->Date) ) {
+                        value += player->playData(match->Date)->data("Goal").toULongLong();
+                    }
+                }
                 break;
             case BoardAssist:
+                for( ; i < m_matchs->count(); i++ ) {
+                    const Match* match = m_matchs->matchAt(i);
+                    const Player* player = m_players->playerAt(index.column());
+                    if( match == NULL || player == NULL ) { continue; }
+
+                    if( player->hasMatch(match->Date) ) {
+                        value += player->playData(match->Date)->data("Assist").toULongLong();
+                    }
+                }
                 break;
             case BoardTotal:
+                for( ; i < m_matchs->count(); i++ ) {
+                    const Match* match = m_matchs->matchAt(i);
+                    const Player* player = m_players->playerAt(index.column());
+                    if( match == NULL || player == NULL ) { continue; }
+
+                    if( player->hasMatch(match->Date) ) {
+                        value += player->playData(match->Date)->data("Goal").toULongLong();
+                        value += player->playData(match->Date)->data("Assist").toULongLong();
+                    }
+                }
                 break;
             default:
                 ;
             }
-        } else {
+            result.setValue(value);
+        } else {    // each match
             const Match* match = m_matchs->matchAt(index.row());
             const Player* player = m_players->playerAt(index.column());
 

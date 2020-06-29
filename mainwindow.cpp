@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_actionRemovePlayer(NULL),
     m_actionCreatePlayData(NULL),
     m_actionDeletePlayData(NULL),
+    m_actionSortPlayer(NULL),
     m_boardModel(NULL)
 {
     ui->setupUi(this);
@@ -89,6 +90,9 @@ void MainWindow::createActions()
 
     m_actionDeletePlayData = new QAction(tr("Delete Play Data"), this);
     connect(m_actionDeletePlayData, SIGNAL(triggered()), this, SLOT(deletePlayData()));
+
+    m_actionSortPlayer = new QAction(tr("Ascending"), this);
+    connect(m_actionSortPlayer, SIGNAL(triggered()), this, SLOT(sortPlayer()));
 }
 
 void MainWindow::setupMenuBar()
@@ -255,6 +259,11 @@ void MainWindow::deletePlayData()
     }
 }
 
+void MainWindow::sortPlayer()
+{
+
+}
+
 void MainWindow::viewGoal()
 {
     m_boardModel->setViewItem(BoardModel::BoardGoal);
@@ -275,11 +284,16 @@ void MainWindow::boardVerticalContextMenu(const QPoint &pos)
     if( pos.isNull() ) { return; }
 
     QModelIndex index = ui->tableViewBoard->indexAt(pos);
-    if( !index.isValid() || index.row() == m_matchs.count() ) { return; }
+    if( !index.isValid() ) { return; }
 
     if( ui->tableViewBoard->selectionModel()->isRowSelected(index.row(), QModelIndex()) ) {
         m_menuBoardTable->clear();
-        m_menuBoardTable->addAction(m_actionRemoveMatch);
+
+        m_menuBoardTable->addAction(m_actionSortPlayer);
+
+        if( index.row() < m_matchs.count() ) {
+            m_menuBoardTable->addAction(m_actionRemoveMatch);
+        }
 
         m_menuBoardTable->popup(ui->tableViewBoard->mapToGlobal(pos));
     }
