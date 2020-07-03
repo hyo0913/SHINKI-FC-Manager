@@ -19,6 +19,7 @@ SOURCES += \
     BoardItemDelegate.cpp \
     BoardModel.cpp \
     Match.cpp \
+    MatchDetailDialog.cpp \
     Player.cpp \
     main.cpp \
     mainwindow.cpp
@@ -27,10 +28,12 @@ HEADERS += \
     BoardItemDelegate.h \
     BoardModel.h \
     Match.h \
+    MatchDetailDialog.h \
     Player.h \
     mainwindow.h
 
 FORMS += \
+    MatchDetailDialog.ui \
     mainwindow.ui
 
 TRANSLATIONS += \

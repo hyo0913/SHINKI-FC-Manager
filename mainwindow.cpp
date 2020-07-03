@@ -16,6 +16,8 @@
 #include "BoardModel.h"
 #include "BoardItemDelegate.h"
 
+#include "MatchDetailDialog.h"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
@@ -27,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_actionRemovePlayer(NULL),
     m_actionCreatePlayData(NULL),
     m_actionDeletePlayData(NULL),
-    m_actionSortPlayer(NULL),
+    m_actionViewMatchDetails(NULL),
     m_boardModel(NULL)
 {
     ui->setupUi(this);
@@ -91,8 +93,8 @@ void MainWindow::createActions()
     m_actionDeletePlayData = new QAction(tr("Delete Play Data"), this);
     connect(m_actionDeletePlayData, SIGNAL(triggered()), this, SLOT(deletePlayData()));
 
-    m_actionSortPlayer = new QAction(tr("Ascending"), this);
-    connect(m_actionSortPlayer, SIGNAL(triggered()), this, SLOT(sortPlayer()));
+    m_actionViewMatchDetails = new QAction(tr("View Match Details"), this);
+    connect(m_actionViewMatchDetails, SIGNAL(triggered()), this, SLOT(viewMatchDetails()));
 }
 
 void MainWindow::setupMenuBar()
@@ -226,9 +228,10 @@ void MainWindow::createPlayData()
         Player* player = m_players.playerAt(index.column());
 
         if( !player->hasMatch(match->Date) ) {
-            if( match->Players.contains(player->name()) ) {
+            if( !match->Players.contains(player->name()) ) {
                 match->Players << player->name();
             }
+
             PlayData* playData = player->addMatch(match->Date);
             if( playData != nullptr ) {
                 QVariant temp;
@@ -259,11 +262,6 @@ void MainWindow::deletePlayData()
     }
 }
 
-void MainWindow::sortPlayer()
-{
-
-}
-
 void MainWindow::viewGoal()
 {
     m_boardModel->setViewItem(BoardModel::BoardGoal);
@@ -279,6 +277,19 @@ void MainWindow::viewTotal()
     m_boardModel->setViewItem(BoardModel::BoardTotal);
 }
 
+void MainWindow::viewMatchDetails()
+{
+    QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedRows();
+    if( indexList.isEmpty() ) { return; }
+
+    int row = indexList.first().row();
+    const Match* match = m_matchs.matchAt(row);
+    if( match == NULL ) { return; }
+
+    MatchDetailDialog dialog(match, &m_players);
+    dialog.exec();
+}
+
 void MainWindow::boardVerticalContextMenu(const QPoint &pos)
 {
     if( pos.isNull() ) { return; }
@@ -289,9 +300,8 @@ void MainWindow::boardVerticalContextMenu(const QPoint &pos)
     if( ui->tableViewBoard->selectionModel()->isRowSelected(index.row(), QModelIndex()) ) {
         m_menuBoardTable->clear();
 
-        m_menuBoardTable->addAction(m_actionSortPlayer);
-
         if( index.row() < m_matchs.count() ) {
+            m_menuBoardTable->addAction(m_actionViewMatchDetails);
             m_menuBoardTable->addAction(m_actionRemoveMatch);
         }
 

@@ -33,7 +33,7 @@ private:
     QAction* m_actionCreatePlayData;
     QAction* m_actionDeletePlayData;
 
-    QAction* m_actionSortPlayer;
+    QAction* m_actionViewMatchDetails;
 
     Matchs m_matchs;
     Players m_players;
@@ -52,11 +52,11 @@ private slots:
     void createPlayData();
     void deletePlayData();
 
-    void sortPlayer();
-
     void viewGoal();
     void viewAssist();
     void viewTotal();
+
+    void viewMatchDetails();
 
     void boardVerticalContextMenu(const QPoint &pos);
     void boardHorizontalContextMenu(const QPoint &pos);

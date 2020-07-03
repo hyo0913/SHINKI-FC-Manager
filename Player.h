@@ -8,7 +8,6 @@
 namespace PlayDataItem {
 const QString itemGoal = "Goal";
 const QString itemAssist = "Assist";
-const QString itemTotal = "Total";
 }
 
 class PlayData
