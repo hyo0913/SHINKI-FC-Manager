@@ -12,17 +12,23 @@
 #include <QCalendar>
 #include <QSpinBox>
 #include <QMessageBox>
+#include <QFileDialog>
 
 #include "BoardModel.h"
 #include "BoardItemDelegate.h"
 
 #include "MatchDetailDialog.h"
 
+#include "QXlsx/xlsxdocument.h"
+
+using namespace QXlsx;
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_menuBoardTable(new QMenu(this)),
     m_actionImportExcel(NULL),
+    m_actionExportExcel(NULL),
     m_actionAddMatch(NULL),
     m_actionRemoveMatch(NULL),
     m_actionAddPlayer(NULL),
@@ -30,6 +36,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_actionCreatePlayData(NULL),
     m_actionDeletePlayData(NULL),
     m_actionViewMatchDetails(NULL),
+    m_matchs(new Matchs()),
+    m_players(new Players()),
     m_boardModel(NULL)
 {
     ui->setupUi(this);
@@ -37,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
     createActions();
     setupMenuBar();
 
-    m_boardModel = new BoardModel(&m_matchs, &m_players);
+    m_boardModel = new BoardModel(m_matchs, m_players);
     ui->tableViewBoard->setModel(m_boardModel);
     ui->tableViewBoard->setItemDelegate(new BoardItemDelegate());
 
@@ -69,11 +77,17 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete m_matchs;
+    delete m_players;
 }
 
 void MainWindow::createActions()
 {
     m_actionImportExcel = new QAction(tr("Import"), this);
+    connect(m_actionImportExcel, SIGNAL(triggered()), this, SLOT(importExcel()));
+
+    m_actionExportExcel = new QAction(tr("Export"), this);
+    connect(m_actionExportExcel, SIGNAL(triggered()), this, SLOT(exportExcel()));
 
     m_actionAddMatch = new QAction(tr("Add Match"), this);
     connect(m_actionAddMatch, SIGNAL(triggered()), this, SLOT(addMatch()));
@@ -101,6 +115,7 @@ void MainWindow::setupMenuBar()
 {
     QMenu* fileMenu = menuBar()->addMenu(tr("File"));
     fileMenu->addAction(m_actionImportExcel);
+    fileMenu->addAction(m_actionExportExcel);
 
     QMenu* matchMenu = menuBar()->addMenu(tr("Match"));
     matchMenu->addAction(m_actionAddMatch);
@@ -158,7 +173,7 @@ void MainWindow::removeMatch()
             break;
         }
 
-        const QDate &date = m_matchs.matchAt(index.row())->Date;
+        const QDate &date = m_matchs->matchAt(index.row())->Date;
         if( !m_boardModel->removeMatch(date) ) {
             break;
         }
@@ -210,7 +225,7 @@ void MainWindow::removePlayer()
             break;
         }
 
-        const QString &name = m_players.playerAt(index.column())->name();
+        const QString &name = m_players->playerAt(index.column())->name();
         if( !m_boardModel->removePlayer(name) ) {
             break;
         }
@@ -224,8 +239,8 @@ void MainWindow::createPlayData()
         QModelIndex index = indexList.takeFirst();
         if( !index.isValid() ) { continue; }
 
-        Match* match = m_matchs.matchAt(index.row());
-        Player* player = m_players.playerAt(index.column());
+        Match* match = m_matchs->matchAt(index.row());
+        Player* player = m_players->playerAt(index.column());
 
         if( !player->hasMatch(match->Date) ) {
             if( !match->Players.contains(player->name()) ) {
@@ -250,8 +265,8 @@ void MainWindow::deletePlayData()
         QModelIndex index = indexList.takeFirst();
         if( !index.isValid() ) { continue; }
 
-        Match* match = m_matchs.matchAt(index.row());
-        Player* player = m_players.playerAt(index.column());
+        Match* match = m_matchs->matchAt(index.row());
+        Player* player = m_players->playerAt(index.column());
 
         if( player->hasMatch(match->Date) ) {
             if( match->Players.contains(player->name()) ) {
@@ -283,10 +298,10 @@ void MainWindow::viewMatchDetails()
     if( indexList.isEmpty() ) { return; }
 
     int row = indexList.first().row();
-    const Match* match = m_matchs.matchAt(row);
+    const Match* match = m_matchs->matchAt(row);
     if( match == NULL ) { return; }
 
-    MatchDetailDialog dialog(match, &m_players);
+    MatchDetailDialog dialog(match, m_players);
     dialog.exec();
 }
 
@@ -300,7 +315,7 @@ void MainWindow::boardVerticalContextMenu(const QPoint &pos)
     if( ui->tableViewBoard->selectionModel()->isRowSelected(index.row(), QModelIndex()) ) {
         m_menuBoardTable->clear();
 
-        if( index.row() < m_matchs.count() ) {
+        if( index.row() < m_matchs->count() ) {
             m_menuBoardTable->addAction(m_actionViewMatchDetails);
             m_menuBoardTable->addAction(m_actionRemoveMatch);
         }
@@ -314,7 +329,7 @@ void MainWindow::boardHorizontalContextMenu(const QPoint &pos)
     if( pos.isNull() ) { return; }
 
     QModelIndex index = ui->tableViewBoard->indexAt(pos);
-    if( !index.isValid() || index.row() == m_matchs.count() ) { return; }
+    if( !index.isValid() || index.row() == m_matchs->count() ) { return; }
 
     if( ui->tableViewBoard->selectionModel()->isColumnSelected(index.column(), QModelIndex()) ) {
         m_menuBoardTable->clear();
@@ -329,10 +344,10 @@ void MainWindow::boardTableContextMenu(const QPoint &pos)
     if( pos.isNull() ) { return; }
 
     QModelIndex index = ui->tableViewBoard->indexAt(pos);
-    if( !index.isValid() || index.row() == m_matchs.count() ) { return; }
+    if( !index.isValid() || index.row() == m_matchs->count() ) { return; }
 
-    const Match* match = m_matchs.matchAt(index.row());
-    const Player* player = m_players.playerAt(index.column());
+    const Match* match = m_matchs->matchAt(index.row());
+    const Player* player = m_players->playerAt(index.column());
 
     if( !player->hasMatch(match->Date) ) {
         m_menuBoardTable->clear();
@@ -343,4 +358,137 @@ void MainWindow::boardTableContextMenu(const QPoint &pos)
     }
 
     m_menuBoardTable->popup(ui->tableViewBoard->mapToGlobal(pos));
+}
+
+void MainWindow::importExcel()
+{
+    QString fileName = QFileDialog::getOpenFileName(NULL, "Import", ".", "*.xlsx");
+    if( fileName.isEmpty() ) { return; }
+
+    Matchs* newMatchs = new Matchs();
+    Match* match = NULL;
+    Players* newPlayers = new Players();
+    Player* player = NULL;
+    PlayData* playData = NULL;
+    QVariant valTemp;
+    QVariant valDate;
+    QVariant valPlayerName;
+    QVariant valGoal;
+    QVariant valAssist;
+    const Cell* cellDate = NULL;
+    const Cell* cellPlayerName = NULL;
+    const Cell* cell = NULL;
+    int row = 0;
+    int column = 0;
+    QDate date;
+    QString playerName;
+
+    Document xlsx(fileName);
+    if( !xlsx.load() ) {
+        QMessageBox::critical(NULL, tr("Import"), tr("Failed to load the file"), QMessageBox::Close);
+        goto errorReturn;
+    }
+
+    // check date column
+    cell = xlsx.cellAt(2, 1);
+    if( cell == NULL ) {
+        QMessageBox::critical(NULL, tr("Import"), tr("Could not find a date column"), QMessageBox::Close);
+        goto errorReturn;
+    }
+
+    valTemp = cell->readValue();
+    if( valTemp.toString() != "Date" ) {
+        QMessageBox::critical(NULL, tr("Import"), tr("Could not find a date column"), QMessageBox::Close);
+        goto errorReturn;
+    }
+
+    // check goal assist
+
+    // create play data
+    row = 3;
+    while( true )
+    {
+        valDate.clear();
+
+        cellDate = xlsx.cellAt(row, 1);
+        if( cellDate == NULL ) { break; }
+
+        valDate = cellDate->readValue();
+        if( valDate.isNull() ) { break; }
+
+        if( !valDate.canConvert(QVariant::Date) || valDate.toString().isEmpty() || valDate.toString() == "Total" ) { break; }
+
+        date = valDate.toDate();
+
+        if( newMatchs->exist(date) ) {
+            row++;
+            continue;
+        }
+
+        match = newMatchs->makeMatch(date);
+        if( match == NULL ) {
+            row++;
+            continue;
+        }
+
+        column = 2;
+        while( true )
+        {
+            valPlayerName.clear();
+            valGoal.clear();
+            valAssist.clear();
+
+            cellPlayerName = xlsx.cellAt(1, column);
+            if( cellPlayerName == NULL ) { break; }
+
+            valPlayerName = cellPlayerName->readValue();
+            if( valPlayerName.isNull() || !valPlayerName.canConvert(QVariant::String) ) { break; }
+
+            if( !newPlayers->exist(valPlayerName.toString()) ) {
+                player = newPlayers->makePalyer(valPlayerName.toString());
+            } else {
+                player = newPlayers->player(valPlayerName.toString());
+            }
+            if( player == NULL ) { break; }
+
+            // goal
+            cell = xlsx.cellAt(row, column++);
+            if( cell != NULL ) {
+                valGoal = cell->readValue();
+            }
+
+            cell = xlsx.cellAt(row, column++);
+            if( cell != NULL ) {
+                valAssist = cell->readValue();
+            }
+
+            if( valGoal.isValid() || valAssist.isValid() ) {
+                match->Players << valPlayerName.toString();
+                playData = player->addMatch(date);
+
+                playData->setData(PlayDataItem::itemGoal, valGoal);
+                playData->setData(PlayDataItem::itemAssist, valAssist);
+            }
+        }
+
+        row++;
+    }
+
+    // import
+    m_boardModel->changeModelData(newMatchs, newPlayers);
+    delete m_matchs;
+    m_matchs = newMatchs;
+    delete m_players;
+    m_players = newPlayers;
+    return;
+
+    // error
+    errorReturn:
+    delete newMatchs;
+    delete newPlayers;
+}
+
+void MainWindow::exportExcel()
+{
+
 }

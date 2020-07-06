@@ -209,6 +209,16 @@ bool BoardModel::removeMatch(const QDate &date)
 
     this->beginRemoveRows(QModelIndex(), idx, idx);
 
+    Match* match = m_matchs->match(date);
+    QStringList playerNames = match->Players;
+    while( playerNames.count() > 0 )
+    {
+        Player* player = m_players->player(playerNames.takeFirst());
+        if( player == NULL ) { continue; }
+
+        player->removeMatch(match->Date);
+    }
+
     m_matchs->removeMatch(date);
 
     this->removeRow(idx, QModelIndex());
@@ -216,6 +226,15 @@ bool BoardModel::removeMatch(const QDate &date)
     this->endRemoveRows();
 
     return true;
+}
+
+void BoardModel::clearMatchs()
+{
+    while( m_matchs->count() > 0 )
+    {
+        Match* match = m_matchs->matchAt(0);
+        this->removeMatch(match->Date);
+    }
 }
 
 bool BoardModel::addPlayer(const QString &name)
@@ -261,4 +280,16 @@ void BoardModel::setViewItem(BoardModel::BoardItemType type)
     m_boardItemType = type;
 
     if( reset ) { this->endResetModel(); }
+}
+
+void BoardModel::changeModelData(Matchs *matchs, Players *players)
+{
+    if( matchs == NULL || players == NULL ) { return; }
+
+    this->beginResetModel();
+
+    m_matchs = matchs;
+    m_players = players;
+
+    this->endResetModel();
 }

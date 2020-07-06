@@ -26,6 +26,7 @@ private:
     QMenu* m_menuBoardTable;
 
     QAction* m_actionImportExcel;
+    QAction* m_actionExportExcel;
     QAction* m_actionAddMatch;
     QAction* m_actionRemoveMatch;
     QAction* m_actionAddPlayer;
@@ -35,8 +36,8 @@ private:
 
     QAction* m_actionViewMatchDetails;
 
-    Matchs m_matchs;
-    Players m_players;
+    Matchs* m_matchs;
+    Players* m_players;
 
     BoardModel* m_boardModel;
 
@@ -61,5 +62,8 @@ private slots:
     void boardVerticalContextMenu(const QPoint &pos);
     void boardHorizontalContextMenu(const QPoint &pos);
     void boardTableContextMenu(const QPoint &pos);
+
+    void importExcel();
+    void exportExcel();
 };
 #endif // MAINWINDOW_H

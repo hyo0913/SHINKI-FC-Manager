@@ -98,6 +98,8 @@ bool Players::exist(const QString &name) const
 
 Player *Players::makePalyer(const QString &name)
 {
+    if( name.isEmpty() ) { return NULL; }
+
     Player* result = NULL;
 
     if( !this->exist(name) ) {

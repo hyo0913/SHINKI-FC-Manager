@@ -16,6 +16,7 @@ public:
         BoardAssist,
         BoardTotal
     };
+
 public:
     BoardModel(Matchs *matchs, Players *players, QObject *parent = nullptr);
     ~BoardModel();
@@ -32,11 +33,14 @@ public:
 
     bool addMatch(const QDate &date);
     bool removeMatch(const QDate &date);
+    void clearMatchs();
 
     bool addPlayer(const QString &name);
     bool removePlayer(const QString &name);
 
     void setViewItem(BoardItemType type);
+
+    void changeModelData(Matchs *matchs, Players *players);
 
 private:
     Matchs* m_matchs;
