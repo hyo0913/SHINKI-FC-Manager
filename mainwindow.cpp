@@ -375,28 +375,19 @@ void MainWindow::importExcel()
     QVariant valPlayerName;
     QVariant valGoal;
     QVariant valAssist;
-    const Cell* cellDate = NULL;
-    const Cell* cellPlayerName = NULL;
-    const Cell* cell = NULL;
     int row = 0;
     int column = 0;
     QDate date;
     QString playerName;
 
-    Document xlsx(fileName);
-    if( !xlsx.load() ) {
+    Document excel(fileName);
+    if( !excel.load() ) {
         QMessageBox::critical(NULL, tr("Import"), tr("Failed to load the file"), QMessageBox::Close);
         goto errorReturn;
     }
 
     // check date column
-    cell = xlsx.cellAt(2, 1);
-    if( cell == NULL ) {
-        QMessageBox::critical(NULL, tr("Import"), tr("Could not find a date column"), QMessageBox::Close);
-        goto errorReturn;
-    }
-
-    valTemp = cell->readValue();
+    valTemp = excel.read(2, 1);
     if( valTemp.toString() != "Date" ) {
         QMessageBox::critical(NULL, tr("Import"), tr("Could not find a date column"), QMessageBox::Close);
         goto errorReturn;
@@ -410,10 +401,7 @@ void MainWindow::importExcel()
     {
         valDate.clear();
 
-        cellDate = xlsx.cellAt(row, 1);
-        if( cellDate == NULL ) { break; }
-
-        valDate = cellDate->readValue();
+        valDate = excel.read(row, 1);
         if( valDate.isNull() ) { break; }
 
         if( !valDate.canConvert(QVariant::Date) || valDate.toString().isEmpty() || valDate.toString() == "Total" ) { break; }
@@ -438,10 +426,7 @@ void MainWindow::importExcel()
             valGoal.clear();
             valAssist.clear();
 
-            cellPlayerName = xlsx.cellAt(1, column);
-            if( cellPlayerName == NULL ) { break; }
-
-            valPlayerName = cellPlayerName->readValue();
+            valPlayerName = excel.read(1, column);
             if( valPlayerName.isNull() || !valPlayerName.canConvert(QVariant::String) ) { break; }
 
             if( !newPlayers->exist(valPlayerName.toString()) ) {
@@ -452,15 +437,8 @@ void MainWindow::importExcel()
             if( player == NULL ) { break; }
 
             // goal
-            cell = xlsx.cellAt(row, column++);
-            if( cell != NULL ) {
-                valGoal = cell->readValue();
-            }
-
-            cell = xlsx.cellAt(row, column++);
-            if( cell != NULL ) {
-                valAssist = cell->readValue();
-            }
+            valGoal = excel.read(row, column++);
+            valAssist = excel.read(row, column++);
 
             if( valGoal.isValid() || valAssist.isValid() ) {
                 match->Players << valPlayerName.toString();
@@ -490,4 +468,5 @@ void MainWindow::importExcel()
 
 void MainWindow::exportExcel()
 {
+    Document excel;
 }
