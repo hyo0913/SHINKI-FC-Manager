@@ -15,9 +15,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-INCLUDEPATH += \
-    include \
-
 SOURCES += \
     BoardItemDelegate.cpp \
     BoardModel.cpp \
@@ -46,9 +43,3 @@ TRANSLATIONS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/lib/ -lQXlsx
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/lib/ -lQXlsxd
-
-INCLUDEPATH += $$PWD/include/QXlsx
-DEPENDPATH += $$PWD/include/QXlsx

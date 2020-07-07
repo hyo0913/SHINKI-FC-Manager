@@ -273,13 +273,13 @@ bool BoardModel::removePlayer(const QString &name)
 
 void BoardModel::setViewItem(BoardModel::BoardItemType type)
 {
-    bool reset = (m_boardItemType != type) ? true : false;
+    if( m_boardItemType == type ) { return; }
 
-    if( reset ) { this->beginResetModel(); }
+    this->beginResetModel();
 
     m_boardItemType = type;
 
-    if( reset ) { this->endResetModel(); }
+    this->endResetModel();
 }
 
 void BoardModel::changeModelData(Matchs *matchs, Players *players)

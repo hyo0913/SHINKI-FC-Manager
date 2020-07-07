@@ -68,6 +68,9 @@ void MatchDetailDialog::init(const Match *match, const Players *players)
         item->goal = playData->data(PlayDataItem::itemGoal);
         item->assist = playData->data(PlayDataItem::itemAssist);
 
+        if( !item->goal.isValid() ) { item->goal.setValue(0); }
+        if( !item->assist.isValid() ) { item->assist.setValue(0); }
+
         ui->treeWidgetBoard->addTopLevelItem(item);
     }
 }

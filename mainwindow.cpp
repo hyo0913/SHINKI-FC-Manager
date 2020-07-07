@@ -19,10 +19,6 @@
 
 #include "MatchDetailDialog.h"
 
-#include "QXlsx/xlsxdocument.h"
-
-using namespace QXlsx;
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
@@ -79,6 +75,7 @@ MainWindow::~MainWindow()
     delete ui;
     delete m_matchs;
     delete m_players;
+    delete m_boardModel;
 }
 
 void MainWindow::createActions()
@@ -362,7 +359,7 @@ void MainWindow::boardTableContextMenu(const QPoint &pos)
 
 void MainWindow::importExcel()
 {
-    QString fileName = QFileDialog::getOpenFileName(NULL, "Import", ".", "*.xlsx");
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Import"), ".", "*.xlsx", NULL, QFileDialog::DontUseNativeDialog);
     if( fileName.isEmpty() ) { return; }
 
     Matchs* newMatchs = new Matchs();
@@ -370,109 +367,6 @@ void MainWindow::importExcel()
     Players* newPlayers = new Players();
     Player* player = NULL;
     PlayData* playData = NULL;
-    QVariant valTemp;
-    QVariant valDate;
-    QVariant valPlayerName;
-    QVariant valGoal;
-    QVariant valAssist;
-    const Cell* cellDate = NULL;
-    const Cell* cellPlayerName = NULL;
-    const Cell* cell = NULL;
-    int row = 0;
-    int column = 0;
-    QDate date;
-    QString playerName;
-
-    Document xlsx(fileName);
-    if( !xlsx.load() ) {
-        QMessageBox::critical(NULL, tr("Import"), tr("Failed to load the file"), QMessageBox::Close);
-        goto errorReturn;
-    }
-
-    // check date column
-    cell = xlsx.cellAt(2, 1);
-    if( cell == NULL ) {
-        QMessageBox::critical(NULL, tr("Import"), tr("Could not find a date column"), QMessageBox::Close);
-        goto errorReturn;
-    }
-
-    valTemp = cell->readValue();
-    if( valTemp.toString() != "Date" ) {
-        QMessageBox::critical(NULL, tr("Import"), tr("Could not find a date column"), QMessageBox::Close);
-        goto errorReturn;
-    }
-
-    // check goal assist
-
-    // create play data
-    row = 3;
-    while( true )
-    {
-        valDate.clear();
-
-        cellDate = xlsx.cellAt(row, 1);
-        if( cellDate == NULL ) { break; }
-
-        valDate = cellDate->readValue();
-        if( valDate.isNull() ) { break; }
-
-        if( !valDate.canConvert(QVariant::Date) || valDate.toString().isEmpty() || valDate.toString() == "Total" ) { break; }
-
-        date = valDate.toDate();
-
-        if( newMatchs->exist(date) ) {
-            row++;
-            continue;
-        }
-
-        match = newMatchs->makeMatch(date);
-        if( match == NULL ) {
-            row++;
-            continue;
-        }
-
-        column = 2;
-        while( true )
-        {
-            valPlayerName.clear();
-            valGoal.clear();
-            valAssist.clear();
-
-            cellPlayerName = xlsx.cellAt(1, column);
-            if( cellPlayerName == NULL ) { break; }
-
-            valPlayerName = cellPlayerName->readValue();
-            if( valPlayerName.isNull() || !valPlayerName.canConvert(QVariant::String) ) { break; }
-
-            if( !newPlayers->exist(valPlayerName.toString()) ) {
-                player = newPlayers->makePalyer(valPlayerName.toString());
-            } else {
-                player = newPlayers->player(valPlayerName.toString());
-            }
-            if( player == NULL ) { break; }
-
-            // goal
-            cell = xlsx.cellAt(row, column++);
-            if( cell != NULL ) {
-                valGoal = cell->readValue();
-            }
-
-            cell = xlsx.cellAt(row, column++);
-            if( cell != NULL ) {
-                valAssist = cell->readValue();
-            }
-
-            if( valGoal.isValid() || valAssist.isValid() ) {
-                match->Players << valPlayerName.toString();
-                playData = player->addMatch(date);
-
-                playData->setData(PlayDataItem::itemGoal, valGoal);
-                playData->setData(PlayDataItem::itemAssist, valAssist);
-            }
-        }
-
-        row++;
-    }
 
     // import
     m_boardModel->changeModelData(newMatchs, newPlayers);
@@ -480,15 +374,8 @@ void MainWindow::importExcel()
     m_matchs = newMatchs;
     delete m_players;
     m_players = newPlayers;
-    return;
-
-    // error
-    errorReturn:
-    delete newMatchs;
-    delete newPlayers;
 }
 
 void MainWindow::exportExcel()
 {
-
 }
