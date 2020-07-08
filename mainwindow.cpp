@@ -9,7 +9,6 @@
 #include <QDateEdit>
 #include <QDialog>
 #include <QDialogButtonBox>
-#include <QCalendar>
 #include <QSpinBox>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -19,8 +18,7 @@
 
 #include "MatchDetailDialog.h"
 
-#include "QXlsx/xlsxdocument.h"
-using namespace QXlsx;
+#include <xlnt/xlnt.hpp>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -370,43 +368,84 @@ void MainWindow::importExcel()
     Players* newPlayers = new Players();
     Player* player = NULL;
     PlayData* playData = NULL;
-    QVariant valTemp;
-    QVariant valDate;
-    QVariant valPlayerName;
+    QString strTemp;
+
     QVariant valGoal;
     QVariant valAssist;
+
     int row = 0;
     int column = 0;
-    QDate date;
-    QString playerName;
+    int rowCount = 0;
+    int columnCount = 0;
 
-    Document excel(fileName);
-    if( !excel.load() ) {
-        QMessageBox::critical(NULL, tr("Import"), tr("Failed to load the file"), QMessageBox::Close);
-        goto errorReturn;
+    QDate date;
+    QString name;
+
+    xlnt::workbook excel;
+    try {
+        excel.load(fileName.toStdString());
+    } catch (xlnt::exception exception) {
+        QString msg = QString::fromUtf8(exception.what());
+        QMessageBox::critical(NULL, tr("Import"), tr("Failed to load the file") + "\n" + tr("Exception") + " : " + msg, QMessageBox::Close);
+
+        delete newMatchs;
+        delete newPlayers;
+        return;
     }
 
+    xlnt::worksheet sheet = excel.sheet_by_index(0);
+    rowCount = sheet.rows().length();
+    columnCount = sheet.columns().length();
+
+    // check document format
     // check date column
-    valTemp = excel.read(2, 1);
-    if( valTemp.toString() != "Date" ) {
-        QMessageBox::critical(NULL, tr("Import"), tr("Could not find a date column"), QMessageBox::Close);
-        goto errorReturn;
+    strTemp = QString::fromStdString(sheet.cell(xlnt::column_t(1), xlnt::row_t(2)).to_string());
+    if( strTemp != "Date" ) {
+        QMessageBox::critical(NULL,
+                              tr("Import"),
+                              tr("Document format error") + "\n" + tr("Could not find Date header"),
+                              QMessageBox::Close);
+
+        delete newMatchs;
+        delete newPlayers;
+        return;
     }
 
     // check goal assist
+    bool valid = true;
+    for( column = 2; column < columnCount; column += 2)
+    {
+        strTemp = QString::fromStdString(sheet.cell(xlnt::column_t(column), xlnt::row_t(2)).to_string());
+        if( strTemp != "Goal" ) {
+            valid = false;
+            break;
+        }
+
+        strTemp = QString::fromStdString(sheet.cell(xlnt::column_t(column+1), xlnt::row_t(2)).to_string());
+        if( strTemp != "Assist" ) {
+            valid = false;
+            break;
+        }
+    }
+    if( !valid ) {
+        QMessageBox::critical(NULL,
+                              tr("Import"),
+                              tr("Document format error") + "\n" + tr("Could not find Goal&Assist header"),
+                              QMessageBox::Close);
+
+        delete newMatchs;
+        delete newPlayers;
+        return;
+    }
 
     // create play data
-    row = 3;
-    while( true )
+    for( row = 3; row < rowCount; row++ )
     {
-        valDate.clear();
+        xlnt::cell cellDate = sheet.cell(xlnt::column_t(1), xlnt::row_t(row));
+        if( !cellDate.has_value() || !cellDate.is_date() ) { break; }
 
-        valDate = excel.read(row, 1);
-        if( valDate.isNull() ) { break; }
-
-        if( !valDate.canConvert(QVariant::Date) || valDate.toString().isEmpty() || valDate.toString() == "Total" ) { break; }
-
-        date = valDate.toDate();
+        xlnt::date dateTemp = cellDate.value<xlnt::date>();
+        date.setDate(dateTemp.year, dateTemp.month, dateTemp.day);
 
         if( newMatchs->exist(date) ) {
             row++;
@@ -419,37 +458,54 @@ void MainWindow::importExcel()
             continue;
         }
 
-        column = 2;
-        while( true )
+        for( column = 2; column < columnCount; column += 2 )
         {
-            valPlayerName.clear();
-            valGoal.clear();
-            valAssist.clear();
+            xlnt::cell cellName = sheet.cell(xlnt::column_t(column), xlnt::row_t(1));
+            if( !cellName.has_value() ) { break; }
 
-            valPlayerName = excel.read(1, column);
-            if( valPlayerName.isNull() || !valPlayerName.canConvert(QVariant::String) ) { break; }
+            name = QString::fromStdString(cellName.to_string());
+            if( name.isEmpty() ) { break; }
 
-            if( !newPlayers->exist(valPlayerName.toString()) ) {
-                player = newPlayers->makePalyer(valPlayerName.toString());
+            if( !newPlayers->exist(name) ) {
+                player = newPlayers->makePalyer(name);
             } else {
-                player = newPlayers->player(valPlayerName.toString());
+                player = newPlayers->player(name);
             }
             if( player == NULL ) { break; }
 
             // goal
-            valGoal = excel.read(row, column++);
-            valAssist = excel.read(row, column++);
+            xlnt::cell cellGoal = sheet.cell(xlnt::column_t(column), xlnt::row_t(row));
+            xlnt::cell cellAssist = sheet.cell(xlnt::column_t(column+1), xlnt::row_t(row));
 
-            if( valGoal.isValid() || valAssist.isValid() ) {
-                match->Players << valPlayerName.toString();
-                playData = player->addMatch(date);
+            if( (cellGoal.has_value() && (cellGoal.data_type() == xlnt::cell_type::number)) ||
+                (cellAssist.has_value() && (cellAssist.data_type() == xlnt::cell_type::number)) )
+            {
+                if( !match->Players.contains(name) ) {
+                    match->Players << name;
+                }
+
+                if( player->hasMatch(date) ) {
+                    playData = player->playData(date);
+                } else {
+                    playData = player->addMatch(date);
+                }
+
+                if( cellGoal.data_type() == xlnt::cell_type::number ) {
+                    valGoal.setValue(cellGoal.value<int>());
+                } else {
+                    valGoal.setValue(0);
+                }
+
+                if( cellAssist.data_type() == xlnt::cell_type::number ) {
+                    valAssist.setValue(cellAssist.value<int>());
+                } else {
+                    valAssist.setValue(0);
+                }
 
                 playData->setData(PlayDataItem::itemGoal, valGoal);
                 playData->setData(PlayDataItem::itemAssist, valAssist);
             }
         }
-
-        row++;
     }
 
     // import
@@ -459,14 +515,9 @@ void MainWindow::importExcel()
     delete m_players;
     m_players = newPlayers;
     return;
-
-    // error
-    errorReturn:
-    delete newMatchs;
-    delete newPlayers;
 }
 
 void MainWindow::exportExcel()
 {
-    Document excel;
+
 }

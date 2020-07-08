@@ -2,7 +2,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11
+CONFIG += c++14
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -16,7 +16,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 INCLUDEPATH += \
-    include \
+    ../HyoLibrary/mingw73_32/include \
 
 SOURCES += \
     BoardItemDelegate.cpp \
@@ -47,8 +47,8 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/lib/ -lQXlsx
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/lib/ -lQXlsxd
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../HyoLibrary/mingw73_32/lib/ -lxlnt
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../HyoLibrary/mingw73_32/lib/ -lxlntd
 
 INCLUDEPATH += $$PWD/include
 DEPENDPATH += $$PWD/include
