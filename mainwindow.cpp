@@ -386,7 +386,7 @@ void MainWindow::importExcel()
         excel.load(fileName.toStdString());
     } catch (xlnt::exception exception) {
         QString msg = QString::fromUtf8(exception.what());
-        QMessageBox::critical(NULL, tr("Import"), tr("Failed to load the file") + "\n" + tr("Exception") + " : " + msg, QMessageBox::Close);
+        QMessageBox::critical(NULL, tr("Import"), msg, QMessageBox::Close);
 
         delete newMatchs;
         delete newPlayers;
@@ -523,6 +523,14 @@ void MainWindow::exportExcel()
     if( fileName.isEmpty() ) { return; }
     if( !fileName.contains(".xlsx") ) { fileName.append(".xlsx"); }
 
+    const double widthSize = 5.50;
+    const double heightSize = 16.50;
+    xlnt::font fontTemp;
+    fontTemp.size(11);
+
+    xlnt::alignment alignCenter;
+    alignCenter.horizontal(xlnt::horizontal_alignment::center);
+
     xlnt::workbook excel;
     xlnt::worksheet sheet = excel.active_sheet();
 
@@ -530,24 +538,63 @@ void MainWindow::exportExcel()
     for( int i = 0; i < playerCount; i++ ) {
         QString name = m_players->playerAt(i)->name();
 
+        sheet.column_properties(xlnt::column_t(i*2)+2).width = widthSize;
+        sheet.column_properties(xlnt::column_t(i*2)+3).width = widthSize;
+
+        sheet.cell(xlnt::column_t((i*2)+2), xlnt::row_t(1)).font(fontTemp);
+        sheet.cell(xlnt::column_t((i*2)+2), xlnt::row_t(1)).alignment(alignCenter);
         sheet.cell(xlnt::column_t((i*2)+2), xlnt::row_t(1)).value(name.toStdString());
-        sheet.cell(xlnt::column_t((i*2)+2), xlnt::row_t(1)).width();
+
         sheet.merge_cells(xlnt::range_reference((i*2)+2, 1, (i*2)+3, 1));
+
+        sheet.cell(xlnt::column_t((i*2)+2), xlnt::row_t(2)).font(fontTemp);
+        sheet.cell(xlnt::column_t((i*2)+2), xlnt::row_t(2)).alignment(alignCenter);
+        sheet.cell(xlnt::column_t((i*2)+2), xlnt::row_t(2)).value("Goal");
+
+        sheet.cell(xlnt::column_t((i*2)+3), xlnt::row_t(2)).font(fontTemp);
+        sheet.cell(xlnt::column_t((i*2)+3), xlnt::row_t(2)).alignment(alignCenter);
+        sheet.cell(xlnt::column_t((i*2)+3), xlnt::row_t(2)).value("Assist");
     }
 
+    sheet.row_properties(xlnt::row_t(1)).height = heightSize;
+    sheet.row_properties(xlnt::row_t(2)).height = heightSize;
+
+    sheet.cell(xlnt::column_t(1), xlnt::row_t(2)).font(fontTemp);
+    sheet.cell(xlnt::column_t(1), xlnt::row_t(2)).alignment(alignCenter);
     sheet.cell(xlnt::column_t(1), xlnt::row_t(2)).value("Date");
 
-    QDate date;
+    const Match* match = NULL;
+    const Player* player = NULL;
+    const PlayData* playData = NULL;
     int rowCount = m_matchs->count();
     int columnCount = playerCount*2+1;
-    for( int row = 3; row < rowCount; row++ )
+    for( int row = 3; row < rowCount+3; row++ )
     {
-        date = m_matchs->matchAt(row-3)->Date;
-        xlnt::date dateTemp(date.year(), date.month(), date.day());
+        sheet.row_properties(xlnt::row_t(row)).height = heightSize;
+
+        match = m_matchs->matchAt(row-3);
+        if( match == NULL ) { continue; }
+
+        sheet.cell(xlnt::column_t(1), xlnt::row_t(row)).font(fontTemp);
+        sheet.cell(xlnt::column_t(1), xlnt::row_t(row)).alignment(alignCenter);
+
+        xlnt::date dateTemp(match->Date.year(), match->Date.month(), match->Date.day());
         sheet.cell(xlnt::column_t(1), xlnt::row_t(row)).value(dateTemp);
+
 
         for( int column = 2; column < columnCount; column += 2 )
         {
+            sheet.cell(xlnt::column_t(column), xlnt::row_t(row)).font(fontTemp);
+            sheet.cell(xlnt::column_t(column+1), xlnt::row_t(row)).font(fontTemp);
+
+            player = m_players->playerAt(column/2);
+            if( player == NULL ) { continue; }
+
+            playData = player->playData(match->Date);
+            if( playData == NULL ) { continue; }
+
+            sheet.cell(xlnt::column_t(column), xlnt::row_t(row)).value(playData->data(PlayDataItem::itemGoal).toInt());
+            sheet.cell(xlnt::column_t(column+1), xlnt::row_t(row)).value(playData->data(PlayDataItem::itemAssist).toInt());
         }
     }
 

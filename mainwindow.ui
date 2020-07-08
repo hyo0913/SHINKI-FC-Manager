@@ -40,7 +40,7 @@
       <item>
        <widget class="QRadioButton" name="radioButtonViewTotal">
         <property name="text">
-         <string>Total</string>
+         <string>Goal + Assist</string>
         </property>
        </widget>
       </item>
