@@ -519,5 +519,37 @@ void MainWindow::importExcel()
 
 void MainWindow::exportExcel()
 {
+    QString fileName = QFileDialog::getSaveFileName(NULL, "Export", ".", "*.xlsx", NULL, QFileDialog::DontUseNativeDialog);
+    if( fileName.isEmpty() ) { return; }
+    if( !fileName.contains(".xlsx") ) { fileName.append(".xlsx"); }
 
+    xlnt::workbook excel;
+    xlnt::worksheet sheet = excel.active_sheet();
+
+    int playerCount = m_players->count();
+    for( int i = 0; i < playerCount; i++ ) {
+        QString name = m_players->playerAt(i)->name();
+
+        sheet.cell(xlnt::column_t((i*2)+2), xlnt::row_t(1)).value(name.toStdString());
+        sheet.cell(xlnt::column_t((i*2)+2), xlnt::row_t(1)).width();
+        sheet.merge_cells(xlnt::range_reference((i*2)+2, 1, (i*2)+3, 1));
+    }
+
+    sheet.cell(xlnt::column_t(1), xlnt::row_t(2)).value("Date");
+
+    QDate date;
+    int rowCount = m_matchs->count();
+    int columnCount = playerCount*2+1;
+    for( int row = 3; row < rowCount; row++ )
+    {
+        date = m_matchs->matchAt(row-3)->Date;
+        xlnt::date dateTemp(date.year(), date.month(), date.day());
+        sheet.cell(xlnt::column_t(1), xlnt::row_t(row)).value(dateTemp);
+
+        for( int column = 2; column < columnCount; column += 2 )
+        {
+        }
+    }
+
+    excel.save(fileName.toStdString());
 }
