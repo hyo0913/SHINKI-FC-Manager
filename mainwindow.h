@@ -39,6 +39,7 @@ private:
     // player
     QAction* m_actionAddPlayer;
     QAction* m_actionRemovePlayer;
+    QAction* m_actionEditPlayer;
 
     // match on board
     QAction* m_actionRemoveMatchOnBoard;
@@ -47,6 +48,9 @@ private:
     // player on board
     QAction* m_actionAddPlayerOnBoard;
     QAction* m_actionRemovePlayerOnBoard;
+    QAction* m_actionEditPlayerOnBoard;
+    QAction* m_actionMoveLeftPlayerOnBoard;
+    QAction* m_actionMoveRightPlayerOnBoard;
 
     // playdata on board
     QAction* m_actionCreatePlayDataOnBoard;
@@ -71,6 +75,10 @@ private slots:
     void addPlayer();
     void removePlayer();
     void removePlayerOnBoard();
+    void editPlayer();
+    void editPlayerOnBoard();
+    void moveToLeftPlayerOnBoard();
+    void moveToRightPlayerOnBoard();
 
     void createPlayDataOnBoard();
     void deletePlayDataOnBoard();

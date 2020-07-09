@@ -34,6 +34,7 @@ public:
     ~Player();
 
     inline const QString &name() const { return m_name; }
+    inline void setName(const QString &name) { m_name = name; }
     bool hasMatch(const QDate &date) const;
     PlayData* addMatch(const QDate &date);
     void removeMatch(const QDate &date);
@@ -50,6 +51,8 @@ private:
 
 class Players
 {
+    friend Player;
+
 public:
     Players();
     ~Players();
@@ -64,6 +67,7 @@ public:
     Player* player(const QString &name);
     const Player* player(const QString &name) const;
     int index(const QString &name) const;
+    void changeIndex(int before, int after);
 
 private:
     QList<Player*> m_players;

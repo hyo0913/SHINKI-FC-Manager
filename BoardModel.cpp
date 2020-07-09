@@ -271,6 +271,46 @@ bool BoardModel::removePlayer(const QString &name)
     return true;
 }
 
+bool BoardModel::editPlayerName(const QString &before, const QString &after)
+{
+    bool result = false;
+
+    this->beginResetModel();
+
+    Player* player = m_players->player(before);
+    if( player != NULL ) {
+        player->setName(after);
+    }
+
+    this->endResetModel();
+
+    return result;
+}
+
+void BoardModel::movePlayerToLeft(const QString &name)
+{
+    int index = m_players->index(name);
+    if( index < 0 ) { return; }
+
+    if( 0 < index && index < m_players->count() ) {
+        this->beginResetModel();
+        m_players->changeIndex(index, index-1);
+        this->endResetModel();
+    }
+}
+
+void BoardModel::movePlayerToRight(const QString &name)
+{
+    int index = m_players->index(name);
+    if( index < 0 ) { return; }
+
+    if( 0 <= index && index < m_players->count()-1 ) {
+        this->beginResetModel();
+        m_players->changeIndex(index, index+1);
+        this->endResetModel();
+    }
+}
+
 void BoardModel::setViewItem(BoardModel::BoardItemType type)
 {
     if( m_boardItemType == type ) { return; }

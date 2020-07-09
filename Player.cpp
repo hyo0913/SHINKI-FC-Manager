@@ -195,3 +195,8 @@ int Players::index(const QString &name) const
 
     return result;
 }
+
+void Players::changeIndex(int before, int after)
+{
+    m_players.swapItemsAt(before, after);
+}

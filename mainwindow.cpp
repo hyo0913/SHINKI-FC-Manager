@@ -38,6 +38,9 @@ MainWindow::MainWindow(QWidget *parent) :
     m_actionRemoveMatchOnBoard(NULL),
     m_actionViewMatchDetailsOnBoard(NULL),
     m_actionRemovePlayerOnBoard(NULL),
+    m_actionEditPlayerOnBoard(NULL),
+    m_actionMoveLeftPlayerOnBoard(NULL),
+    m_actionMoveRightPlayerOnBoard(NULL),
     m_actionCreatePlayDataOnBoard(NULL),
     m_actionDeletePlayDataOnBoard(NULL),
     m_matchs(new Matchs()),
@@ -69,16 +72,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->tableViewBoard->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableViewBoard, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(boardTableContextMenu(QPoint)));
-
-    /*
-    m_boardModel->addMatch(QDate(2020, 06, 01));
-    m_boardModel->addMatch(QDate(2020, 06, 02));
-    m_boardModel->addMatch(QDate(2020, 06, 03));
-
-    m_boardModel->addPlayer(QString::fromUtf8("숡퀴"));
-    m_boardModel->addPlayer(QString::fromUtf8("읽퀴"));
-    m_boardModel->addPlayer(QString::fromUtf8("횱퀴"));
-    */
 }
 
 MainWindow::~MainWindow()
@@ -116,6 +109,9 @@ void MainWindow::createActions()
     m_actionRemovePlayer = new QAction(tr("Remove Player"), this);
     connect(m_actionRemovePlayer, SIGNAL(triggered()), this, SLOT(removePlayer()));
 
+    m_actionEditPlayer = new QAction(tr("Edit Player"), this);
+    connect(m_actionEditPlayer, SIGNAL(triggered()), this, SLOT(editPlayer()));
+
     // on board actions
     // - match
     m_actionRemoveMatchOnBoard = new QAction(tr("Remove Match"), this);
@@ -127,6 +123,15 @@ void MainWindow::createActions()
     // - player
     m_actionRemovePlayerOnBoard = new QAction(tr("Remove Player"), this);
     connect(m_actionRemovePlayerOnBoard, SIGNAL(triggered()), this, SLOT(removePlayerOnBoard()));
+
+    m_actionEditPlayerOnBoard = new QAction(tr("Edit Player"), this);
+    connect(m_actionEditPlayerOnBoard, SIGNAL(triggered()), this, SLOT(editPlayerOnBoard()));
+
+    m_actionMoveLeftPlayerOnBoard = new QAction(tr("Move Left"), this);
+    connect(m_actionMoveLeftPlayerOnBoard, SIGNAL(triggered()), this, SLOT(moveToLeftPlayerOnBoard()));
+
+    m_actionMoveRightPlayerOnBoard = new QAction(tr("Move Right"), this);
+    connect(m_actionMoveRightPlayerOnBoard, SIGNAL(triggered()), this, SLOT(moveToRightPlayerOnBoard()));
 
     // - playdata
     m_actionCreatePlayDataOnBoard = new QAction(tr("Create Play Data"), this);
@@ -151,12 +156,16 @@ void MainWindow::setupMenus()
     QMenu* playerMenu = menuBar()->addMenu(tr("Player"));
     playerMenu->addAction(m_actionAddPlayer);
     playerMenu->addAction(m_actionRemovePlayer);
+    playerMenu->addAction(m_actionEditPlayer);
 
     // board vertical header
     m_menuBoardVerticalHeader->addAction(m_actionViewMatchDetailsOnBoard);
     m_menuBoardVerticalHeader->addAction(m_actionRemoveMatchOnBoard);
 
     // board horizontal header
+    m_menuBoardHorizontalHeader->addAction(m_actionMoveLeftPlayerOnBoard);
+    m_menuBoardHorizontalHeader->addAction(m_actionMoveRightPlayerOnBoard);
+    m_menuBoardHorizontalHeader->addAction(m_actionEditPlayerOnBoard);
     m_menuBoardHorizontalHeader->addAction(m_actionRemovePlayerOnBoard);
 
     // board table
@@ -350,6 +359,125 @@ void MainWindow::removePlayerOnBoard()
             break;
         }
     }
+}
+
+void MainWindow::editPlayer()
+{
+    QDialog dialog;
+    dialog.setWindowTitle(tr("SHINKI FC Manager"));
+    QDialogButtonBox buttonBox;
+    buttonBox.setStandardButtons(QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
+    connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+    dialog.setLayout(new QVBoxLayout());
+
+    QListWidget* list = new QListWidget();
+    connect(list, SIGNAL(itemDoubleClicked(QListWidgetItem*)), &dialog, SLOT(accept()));
+    dialog.layout()->addWidget(list);
+    dialog.layout()->addWidget(&buttonBox);
+
+    for( int i = 0; i < m_players->count(); i++ ) {
+        list->addItem(new QListWidgetItem(m_players->playerAt(i)->name()));
+    }
+
+    if( dialog.exec() == QDialog::Accepted ) {
+        QList<QListWidgetItem*> selectedItems = list->selectedItems();
+
+        if( selectedItems.count() > 0 ) {
+            QListWidgetItem* item = selectedItems.takeFirst();
+            if( item == NULL ) { return; }
+
+            QString beforeName = item->text();
+
+            QDialog nameDialog;
+            nameDialog.setWindowTitle(tr("SHINKI FC Manager"));
+            QDialogButtonBox buttonBox;
+            buttonBox.setStandardButtons(QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
+            connect(&buttonBox, SIGNAL(accepted()), &nameDialog, SLOT(accept()));
+            connect(&buttonBox, SIGNAL(rejected()), &nameDialog, SLOT(reject()));
+
+            nameDialog.setLayout(new QVBoxLayout());
+
+            QLineEdit* lineEdit = new QLineEdit();
+            nameDialog.layout()->addWidget(lineEdit);
+            nameDialog.layout()->addWidget(&buttonBox);
+            lineEdit->setText(beforeName);
+
+            if( nameDialog.exec() == QDialog::Accepted ) {
+                QString afterName = lineEdit->text();
+                if( !afterName.isEmpty() ) {
+                    if( m_players->exist(afterName) ) {
+                        QMessageBox::warning(NULL, tr("SHINKI FC Manager"), tr("Already registered"), QMessageBox::Close);
+                    } else {
+                        m_boardModel->editPlayerName(beforeName, afterName);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void MainWindow::editPlayerOnBoard()
+{
+    QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedColumns();
+    if( indexList.count() <= 0 ) { return; }
+
+    QModelIndex index = indexList.takeFirst();
+    if( !index.isValid() ) { return; }
+
+    const QString beforeName = m_players->playerAt(index.column())->name();
+
+    QDialog nameDialog;
+    nameDialog.setWindowTitle(tr("SHINKI FC Manager"));
+    QDialogButtonBox buttonBox;
+    buttonBox.setStandardButtons(QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
+    connect(&buttonBox, SIGNAL(accepted()), &nameDialog, SLOT(accept()));
+    connect(&buttonBox, SIGNAL(rejected()), &nameDialog, SLOT(reject()));
+
+    nameDialog.setLayout(new QVBoxLayout());
+
+    QLineEdit* lineEdit = new QLineEdit();
+    nameDialog.layout()->addWidget(lineEdit);
+    nameDialog.layout()->addWidget(&buttonBox);
+    lineEdit->setText(beforeName);
+
+    if( nameDialog.exec() == QDialog::Accepted ) {
+        QString afterName = lineEdit->text();
+        if( !afterName.isEmpty() ) {
+            if( m_players->exist(afterName) ) {
+                QMessageBox::warning(NULL, tr("SHINKI FC Manager"), tr("Already registered"), QMessageBox::Close);
+            } else {
+                m_boardModel->editPlayerName(beforeName, afterName);
+            }
+        }
+    }
+}
+
+void MainWindow::moveToLeftPlayerOnBoard()
+{
+    QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedColumns();
+    if( indexList.count() <= 0 ) { return; }
+
+    QModelIndex index = indexList.takeFirst();
+    if( !index.isValid() ) { return; }
+
+    const QString name = m_players->playerAt(index.column())->name();
+
+    m_boardModel->movePlayerToLeft(name);
+}
+
+void MainWindow::moveToRightPlayerOnBoard()
+{
+    QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedColumns();
+    if( indexList.count() <= 0 ) { return; }
+
+    QModelIndex index = indexList.takeFirst();
+    if( !index.isValid() ) { return; }
+
+    const QString name = m_players->playerAt(index.column())->name();
+
+    m_boardModel->movePlayerToRight(name);
 }
 
 void MainWindow::createPlayDataOnBoard()

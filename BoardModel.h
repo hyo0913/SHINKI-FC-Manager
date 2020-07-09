@@ -37,6 +37,9 @@ public:
 
     bool addPlayer(const QString &name);
     bool removePlayer(const QString &name);
+    bool editPlayerName(const QString &before, const QString &after);
+    void movePlayerToLeft(const QString &name);
+    void movePlayerToRight(const QString &name);
 
     void setViewItem(BoardItemType type);
 
