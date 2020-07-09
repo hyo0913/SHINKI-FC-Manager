@@ -37,6 +37,8 @@ public:
     bool hasMatch(const QDate &date) const;
     PlayData* addMatch(const QDate &date);
     void removeMatch(const QDate &date);
+    int matchCount() const { return m_data.count(); }
+    QList<QDate> matchDates() const;
     PlayData* playData(const QDate &date);
     const PlayData* playData(const QDate &date) const;
     QVariant data(const QDate &date, const QString &itemName) const;

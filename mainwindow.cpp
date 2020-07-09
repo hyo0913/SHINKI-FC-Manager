@@ -12,6 +12,8 @@
 #include <QSpinBox>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QCalendarWidget>
+#include <QListWidget>
 
 #include "BoardModel.h"
 #include "BoardItemDelegate.h"
@@ -23,16 +25,21 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
+    m_menuBoardVerticalHeader(new QMenu(this)),
+    m_menuBoardHorizontalHeader(new QMenu(this)),
     m_menuBoardTable(new QMenu(this)),
     m_actionImportExcel(NULL),
     m_actionExportExcel(NULL),
     m_actionAddMatch(NULL),
     m_actionRemoveMatch(NULL),
+    m_actionViewMatchDetails(NULL),
     m_actionAddPlayer(NULL),
     m_actionRemovePlayer(NULL),
-    m_actionCreatePlayData(NULL),
-    m_actionDeletePlayData(NULL),
-    m_actionViewMatchDetails(NULL),
+    m_actionRemoveMatchOnBoard(NULL),
+    m_actionViewMatchDetailsOnBoard(NULL),
+    m_actionRemovePlayerOnBoard(NULL),
+    m_actionCreatePlayDataOnBoard(NULL),
+    m_actionDeletePlayDataOnBoard(NULL),
     m_matchs(new Matchs()),
     m_players(new Players()),
     m_boardModel(NULL)
@@ -40,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     createActions();
-    setupMenuBar();
+    setupMenus();
 
     m_boardModel = new BoardModel(m_matchs, m_players);
     ui->tableViewBoard->setModel(m_boardModel);
@@ -49,12 +56,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableViewBoard->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->tableViewBoard->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
-    connect(ui->radioButtonViewGoal, SIGNAL(clicked(bool)), this, SLOT(viewGoal()));
-    connect(ui->radioButtonViewAssist, SIGNAL(clicked(bool)), this, SLOT(viewAssist()));
-    connect(ui->radioButtonViewTotal, SIGNAL(clicked(bool)), this, SLOT(viewTotal()));
+    connect(ui->radioButtonViewGoal, SIGNAL(clicked(bool)), this, SLOT(changeBoardViewTypeToGoal()));
+    connect(ui->radioButtonViewAssist, SIGNAL(clicked(bool)), this, SLOT(changeBoardViewTypeToAssist()));
+    connect(ui->radioButtonViewTotal, SIGNAL(clicked(bool)), this, SLOT(changeBoardViewTypeToTotal()));
 
     ui->tableViewBoard->verticalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableViewBoard->verticalHeader(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(boardVerticalContextMenu(QPoint)));
+    connect(ui->tableViewBoard->verticalHeader(), SIGNAL(sectionDoubleClicked(int)), this, SLOT(viewMatchDetailsOnBoard()));
 
     ui->tableViewBoard->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableViewBoard->horizontalHeader(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(boardHorizontalContextMenu(QPoint)));
@@ -62,6 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableViewBoard->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableViewBoard, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(boardTableContextMenu(QPoint)));
 
+    /*
     m_boardModel->addMatch(QDate(2020, 06, 01));
     m_boardModel->addMatch(QDate(2020, 06, 02));
     m_boardModel->addMatch(QDate(2020, 06, 03));
@@ -69,6 +78,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_boardModel->addPlayer(QString::fromUtf8("숡퀴"));
     m_boardModel->addPlayer(QString::fromUtf8("읽퀴"));
     m_boardModel->addPlayer(QString::fromUtf8("횱퀴"));
+    */
 }
 
 MainWindow::~MainWindow()
@@ -81,36 +91,54 @@ MainWindow::~MainWindow()
 
 void MainWindow::createActions()
 {
+    // top menu actions
+    // - file
     m_actionImportExcel = new QAction(tr("Import"), this);
     connect(m_actionImportExcel, SIGNAL(triggered()), this, SLOT(importExcel()));
 
     m_actionExportExcel = new QAction(tr("Export"), this);
     connect(m_actionExportExcel, SIGNAL(triggered()), this, SLOT(exportExcel()));
 
+    // - match
     m_actionAddMatch = new QAction(tr("Add Match"), this);
     connect(m_actionAddMatch, SIGNAL(triggered()), this, SLOT(addMatch()));
 
     m_actionRemoveMatch = new QAction(tr("Remove Match"), this);
     connect(m_actionRemoveMatch, SIGNAL(triggered()), this, SLOT(removeMatch()));
 
+    m_actionViewMatchDetails = new QAction(tr("View Match Details"), this);
+    connect(m_actionViewMatchDetails, SIGNAL(triggered()), this, SLOT(viewMatchDetails()));
+
+    // - player
     m_actionAddPlayer = new QAction(tr("Add Player"), this);
     connect(m_actionAddPlayer, SIGNAL(triggered()), this, SLOT(addPlayer()));
 
     m_actionRemovePlayer = new QAction(tr("Remove Player"), this);
     connect(m_actionRemovePlayer, SIGNAL(triggered()), this, SLOT(removePlayer()));
 
-    m_actionCreatePlayData = new QAction(tr("Create Play Data"), this);
-    connect(m_actionCreatePlayData, SIGNAL(triggered()), this, SLOT(createPlayData()));
+    // on board actions
+    // - match
+    m_actionRemoveMatchOnBoard = new QAction(tr("Remove Match"), this);
+    connect(m_actionRemoveMatchOnBoard, SIGNAL(triggered()), this, SLOT(removeMatchOnBoard()));
 
-    m_actionDeletePlayData = new QAction(tr("Delete Play Data"), this);
-    connect(m_actionDeletePlayData, SIGNAL(triggered()), this, SLOT(deletePlayData()));
+    m_actionViewMatchDetailsOnBoard = new QAction(tr("View Match Details"), this);
+    connect(m_actionViewMatchDetailsOnBoard, SIGNAL(triggered()), this, SLOT(viewMatchDetailsOnBoard()));
 
-    m_actionViewMatchDetails = new QAction(tr("View Match Details"), this);
-    connect(m_actionViewMatchDetails, SIGNAL(triggered()), this, SLOT(viewMatchDetails()));
+    // - player
+    m_actionRemovePlayerOnBoard = new QAction(tr("Remove Player"), this);
+    connect(m_actionRemovePlayerOnBoard, SIGNAL(triggered()), this, SLOT(removePlayerOnBoard()));
+
+    // - playdata
+    m_actionCreatePlayDataOnBoard = new QAction(tr("Create Play Data"), this);
+    connect(m_actionCreatePlayDataOnBoard, SIGNAL(triggered()), this, SLOT(createPlayDataOnBoard()));
+
+    m_actionDeletePlayDataOnBoard = new QAction(tr("Delete Play Data"), this);
+    connect(m_actionDeletePlayDataOnBoard, SIGNAL(triggered()), this, SLOT(deletePlayDataOnBoard()));
 }
 
-void MainWindow::setupMenuBar()
+void MainWindow::setupMenus()
 {
+    // menu bar
     QMenu* fileMenu = menuBar()->addMenu(tr("File"));
     fileMenu->addAction(m_actionImportExcel);
     fileMenu->addAction(m_actionExportExcel);
@@ -118,10 +146,21 @@ void MainWindow::setupMenuBar()
     QMenu* matchMenu = menuBar()->addMenu(tr("Match"));
     matchMenu->addAction(m_actionAddMatch);
     matchMenu->addAction(m_actionRemoveMatch);
+    matchMenu->addAction(m_actionViewMatchDetails);
 
     QMenu* playerMenu = menuBar()->addMenu(tr("Player"));
     playerMenu->addAction(m_actionAddPlayer);
     playerMenu->addAction(m_actionRemovePlayer);
+
+    // board vertical header
+    m_menuBoardVerticalHeader->addAction(m_actionViewMatchDetailsOnBoard);
+    m_menuBoardVerticalHeader->addAction(m_actionRemoveMatchOnBoard);
+
+    // board horizontal header
+    m_menuBoardHorizontalHeader->addAction(m_actionRemovePlayerOnBoard);
+
+    // board table
+    //
 }
 
 void MainWindow::addMatch()
@@ -146,18 +185,18 @@ void MainWindow::addMatch()
         QDate date = dateEdit->date();
         if( date.isValid() ) {
             if( !m_boardModel->addMatch(date) ) {
-                QMessageBox msgBox;
-                msgBox.setWindowTitle("SHINKI FC Manager");
-                msgBox.addButton(QMessageBox::Close);
-                msgBox.setText(tr("Already registered"));
-                msgBox.setIcon(QMessageBox::Warning);
-                msgBox.exec();
+                QMessageBox::warning(NULL, tr("SHINKI FC Manager"), tr("Already registered"), QMessageBox::Close);
             }
         }
     }
 }
 
 void MainWindow::removeMatch()
+{
+
+}
+
+void MainWindow::removeMatchOnBoard()
 {
     while( true )
     {
@@ -176,6 +215,62 @@ void MainWindow::removeMatch()
             break;
         }
     }
+}
+
+void MainWindow::viewMatchDetails()
+{
+    QDialog dialog;
+    dialog.setWindowTitle(tr("SHINKI FC Manager"));
+    QDialogButtonBox buttonBox;
+    buttonBox.setStandardButtons(QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
+    connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+    dialog.setLayout(new QVBoxLayout());
+    QCalendarWidget* calender = new QCalendarWidget();
+    dialog.layout()->addWidget(calender);
+    dialog.layout()->addWidget(&buttonBox);
+
+    int ret = 0;
+    QDate date;
+    while( true )
+    {
+        ret = dialog.exec();
+        if( ret == QDialog::Accepted ) {
+            date = calender->selectedDate();
+
+            if( m_matchs->exist(date) ) {
+                break;
+            } else {
+                QMessageBox::critical(NULL,
+                                      tr("View Match Details"),
+                                      tr("No match data"),
+                                      QMessageBox::Close);
+            }
+        } else {
+            break;
+        }
+    }
+
+    if( ret == QDialog::Accepted ) {
+        MatchDetailDialog dialog(m_matchs->match(date), m_players);
+        dialog.exec();
+    }
+}
+
+void MainWindow::viewMatchDetailsOnBoard()
+{
+    QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedRows();
+    if( indexList.isEmpty() ) { return; }
+
+    int row = indexList.first().row();
+    if( row >= m_matchs->count() ) { return; }
+
+    const Match* match = m_matchs->matchAt(row);
+    if( match == NULL ) { return; }
+
+    MatchDetailDialog dialog(match, m_players);
+    dialog.exec();
 }
 
 void MainWindow::addPlayer()
@@ -198,18 +293,45 @@ void MainWindow::addPlayer()
         QString name = lineEdit->text();
         if( !name.isEmpty() ) {
             if( !m_boardModel->addPlayer(name) ) {
-                QMessageBox msgBox;
-                msgBox.setWindowTitle("SHINKI FC Manager");
-                msgBox.addButton(QMessageBox::Close);
-                msgBox.setText(tr("Already registered"));
-                msgBox.setIcon(QMessageBox::Warning);
-                msgBox.exec();
+                QMessageBox::warning(NULL, tr("SHINKI FC Manager"), tr("Already registered"), QMessageBox::Close);
             }
         }
     }
 }
 
 void MainWindow::removePlayer()
+{
+    QDialog dialog;
+    dialog.setWindowTitle(tr("SHINKI FC Manager"));
+    QDialogButtonBox buttonBox;
+    buttonBox.setStandardButtons(QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
+    connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+    dialog.setLayout(new QVBoxLayout());
+
+    QListWidget* list = new QListWidget();
+    connect(list, SIGNAL(itemDoubleClicked(QListWidgetItem*)), &dialog, SLOT(accept()));
+    dialog.layout()->addWidget(list);
+    dialog.layout()->addWidget(&buttonBox);
+
+    for( int i = 0; i < m_players->count(); i++ ) {
+        list->addItem(new QListWidgetItem(m_players->playerAt(i)->name()));
+    }
+
+    if( dialog.exec() == QDialog::Accepted ) {
+        QList<QListWidgetItem*> selectedItems = list->selectedItems();
+
+        while( selectedItems.count() > 0 ) {
+            QListWidgetItem* item = selectedItems.takeFirst();
+            if( item == NULL ) { continue; }
+
+            m_boardModel->removePlayer(item->text());
+        }
+    }
+}
+
+void MainWindow::removePlayerOnBoard()
 {
     while( true )
     {
@@ -230,7 +352,7 @@ void MainWindow::removePlayer()
     }
 }
 
-void MainWindow::createPlayData()
+void MainWindow::createPlayDataOnBoard()
 {
     QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedIndexes();
     while( indexList.count() > 0 ) {
@@ -256,7 +378,7 @@ void MainWindow::createPlayData()
     }
 }
 
-void MainWindow::deletePlayData()
+void MainWindow::deletePlayDataOnBoard()
 {
     QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedIndexes();
     while( indexList.count() > 0 ) {
@@ -275,32 +397,19 @@ void MainWindow::deletePlayData()
     }
 }
 
-void MainWindow::viewGoal()
+void MainWindow::changeBoardViewTypeToGoal()
 {
     m_boardModel->setViewItem(BoardModel::BoardGoal);
 }
 
-void MainWindow::viewAssist()
+void MainWindow::changeBoardViewTypeToAssist()
 {
     m_boardModel->setViewItem(BoardModel::BoardAssist);
 }
 
-void MainWindow::viewTotal()
+void MainWindow::changeBoardViewTypeToTotal()
 {
     m_boardModel->setViewItem(BoardModel::BoardTotal);
-}
-
-void MainWindow::viewMatchDetails()
-{
-    QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedRows();
-    if( indexList.isEmpty() ) { return; }
-
-    int row = indexList.first().row();
-    const Match* match = m_matchs->matchAt(row);
-    if( match == NULL ) { return; }
-
-    MatchDetailDialog dialog(match, m_players);
-    dialog.exec();
 }
 
 void MainWindow::boardVerticalContextMenu(const QPoint &pos)
@@ -310,15 +419,12 @@ void MainWindow::boardVerticalContextMenu(const QPoint &pos)
     QModelIndex index = ui->tableViewBoard->indexAt(pos);
     if( !index.isValid() ) { return; }
 
-    if( ui->tableViewBoard->selectionModel()->isRowSelected(index.row(), QModelIndex()) ) {
-        m_menuBoardTable->clear();
+    int row = index.row();
 
-        if( index.row() < m_matchs->count() ) {
-            m_menuBoardTable->addAction(m_actionViewMatchDetails);
-            m_menuBoardTable->addAction(m_actionRemoveMatch);
-        }
-
-        m_menuBoardTable->popup(ui->tableViewBoard->mapToGlobal(pos));
+    if( index.row() < m_matchs->count() &&
+        ui->tableViewBoard->verticalHeader()->selectionModel()->isRowSelected(row, QModelIndex()) )
+    {
+        m_menuBoardVerticalHeader->popup(ui->tableViewBoard->mapToGlobal(pos));
     }
 }
 
@@ -329,12 +435,7 @@ void MainWindow::boardHorizontalContextMenu(const QPoint &pos)
     QModelIndex index = ui->tableViewBoard->indexAt(pos);
     if( !index.isValid() || index.row() == m_matchs->count() ) { return; }
 
-    if( ui->tableViewBoard->selectionModel()->isColumnSelected(index.column(), QModelIndex()) ) {
-        m_menuBoardTable->clear();
-        m_menuBoardTable->addAction(m_actionRemovePlayer);
-
-        m_menuBoardTable->popup(ui->tableViewBoard->mapToGlobal(pos));
-    }
+    m_menuBoardHorizontalHeader->popup(ui->tableViewBoard->mapToGlobal(pos));
 }
 
 void MainWindow::boardTableContextMenu(const QPoint &pos)
@@ -349,10 +450,10 @@ void MainWindow::boardTableContextMenu(const QPoint &pos)
 
     if( !player->hasMatch(match->Date) ) {
         m_menuBoardTable->clear();
-        m_menuBoardTable->addAction(m_actionCreatePlayData);
+        m_menuBoardTable->addAction(m_actionCreatePlayDataOnBoard);
     } else {
         m_menuBoardTable->clear();
-        m_menuBoardTable->addAction(m_actionDeletePlayData);
+        m_menuBoardTable->addAction(m_actionDeletePlayDataOnBoard);
     }
 
     m_menuBoardTable->popup(ui->tableViewBoard->mapToGlobal(pos));
@@ -567,7 +668,7 @@ void MainWindow::exportExcel()
     const Player* player = NULL;
     const PlayData* playData = NULL;
     int rowCount = m_matchs->count();
-    int columnCount = playerCount*2+1;
+    int columnCount = playerCount*2;
     for( int row = 3; row < rowCount+3; row++ )
     {
         sheet.row_properties(xlnt::row_t(row)).height = heightSize;
@@ -581,13 +682,12 @@ void MainWindow::exportExcel()
         xlnt::date dateTemp(match->Date.year(), match->Date.month(), match->Date.day());
         sheet.cell(xlnt::column_t(1), xlnt::row_t(row)).value(dateTemp);
 
-
-        for( int column = 2; column < columnCount; column += 2 )
+        for( int column = 2; column < columnCount+2; column += 2 )
         {
             sheet.cell(xlnt::column_t(column), xlnt::row_t(row)).font(fontTemp);
             sheet.cell(xlnt::column_t(column+1), xlnt::row_t(row)).font(fontTemp);
 
-            player = m_players->playerAt(column/2);
+            player = m_players->playerAt((column/2)-1);
             if( player == NULL ) { continue; }
 
             playData = player->playData(match->Date);
@@ -595,6 +695,38 @@ void MainWindow::exportExcel()
 
             sheet.cell(xlnt::column_t(column), xlnt::row_t(row)).value(playData->data(PlayDataItem::itemGoal).toInt());
             sheet.cell(xlnt::column_t(column+1), xlnt::row_t(row)).value(playData->data(PlayDataItem::itemAssist).toInt());
+        }
+    }
+
+    // Total
+    sheet.cell(xlnt::column_t(1), xlnt::row_t(rowCount+3)).font(fontTemp);
+    sheet.cell(xlnt::column_t(1), xlnt::row_t(rowCount+3)).alignment(alignCenter);
+    sheet.cell(xlnt::column_t(1), xlnt::row_t(rowCount+3)).value("Total");
+
+    for( int column = 2; column < columnCount+2; column += 2 )
+    {
+        player = m_players->playerAt((column/2)-1);
+        if( player == NULL ) { continue; }
+
+        int valGoal = 0;
+        int valAssist = 0;
+        QList<QDate> dates = player->matchDates();
+        if( dates.count() > 0 )
+        {
+            while( dates.count() > 0 )
+            {
+                playData = player->playData(dates.takeFirst());
+                if( playData == NULL ) { continue; }
+
+                valGoal += playData->data(PlayDataItem::itemGoal).toInt();
+                valAssist += playData->data(PlayDataItem::itemAssist).toInt();
+            }
+
+            sheet.cell(xlnt::column_t(column), xlnt::row_t(rowCount+3)).font(fontTemp);
+            sheet.cell(xlnt::column_t(column), xlnt::row_t(rowCount+3)).value(valGoal);
+
+            sheet.cell(xlnt::column_t(column+1), xlnt::row_t(rowCount+3)).font(fontTemp);
+            sheet.cell(xlnt::column_t(column+1), xlnt::row_t(rowCount+3)).value(valAssist);
         }
     }
 

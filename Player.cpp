@@ -48,6 +48,19 @@ void Player::removeMatch(const QDate &date)
     }
 }
 
+QList<QDate> Player::matchDates() const
+{
+    QList<QDate> result;
+    QList<QString> keys = m_data.keys();
+
+    while( keys.count() > 0 )
+    {
+        result << QDate::fromString(keys.takeFirst());
+    }
+
+    return result;
+}
+
 PlayData *Player::playData(const QDate &date)
 {
     return m_data.value(date.toString(), NULL);

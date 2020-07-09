@@ -23,18 +23,34 @@ public:
 private:
     Ui::MainWindow *ui;
 
+    QMenu* m_menuBoardVerticalHeader;
+    QMenu* m_menuBoardHorizontalHeader;
     QMenu* m_menuBoardTable;
 
+    // file
     QAction* m_actionImportExcel;
     QAction* m_actionExportExcel;
+
+    // match
     QAction* m_actionAddMatch;
     QAction* m_actionRemoveMatch;
+    QAction* m_actionViewMatchDetails;
+
+    // player
     QAction* m_actionAddPlayer;
     QAction* m_actionRemovePlayer;
-    QAction* m_actionCreatePlayData;
-    QAction* m_actionDeletePlayData;
 
-    QAction* m_actionViewMatchDetails;
+    // match on board
+    QAction* m_actionRemoveMatchOnBoard;
+    QAction* m_actionViewMatchDetailsOnBoard;
+
+    // player on board
+    QAction* m_actionAddPlayerOnBoard;
+    QAction* m_actionRemovePlayerOnBoard;
+
+    // playdata on board
+    QAction* m_actionCreatePlayDataOnBoard;
+    QAction* m_actionDeletePlayDataOnBoard;
 
     Matchs* m_matchs;
     Players* m_players;
@@ -42,22 +58,26 @@ private:
     BoardModel* m_boardModel;
 
     void createActions();
-    void setupMenuBar();
+    void setupMenus();
 
 private slots:
     void addMatch();
     void removeMatch();
-    void addPlayer();
-    void removePlayer();
-
-    void createPlayData();
-    void deletePlayData();
-
-    void viewGoal();
-    void viewAssist();
-    void viewTotal();
+    void removeMatchOnBoard();
 
     void viewMatchDetails();
+    void viewMatchDetailsOnBoard();
+
+    void addPlayer();
+    void removePlayer();
+    void removePlayerOnBoard();
+
+    void createPlayDataOnBoard();
+    void deletePlayDataOnBoard();
+
+    void changeBoardViewTypeToGoal();
+    void changeBoardViewTypeToAssist();
+    void changeBoardViewTypeToTotal();
 
     void boardVerticalContextMenu(const QPoint &pos);
     void boardHorizontalContextMenu(const QPoint &pos);
