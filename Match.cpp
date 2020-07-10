@@ -50,7 +50,7 @@ Match *Matchs::makeMatch(const QDate &date)
         result->Date = date;
         m_matchs << result;
 
-        qSort(m_matchs.begin(), m_matchs.end(), MatchLessThan);
+        std::sort(m_matchs.begin(), m_matchs.end(), MatchLessThan);
     }
 
     return result;

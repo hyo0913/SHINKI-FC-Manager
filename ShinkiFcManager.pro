@@ -40,7 +40,8 @@ FORMS += \
     mainwindow.ui
 
 TRANSLATIONS += \
-    ShinkiFcManager_ko_KR.ts
+    ShinkiFcManager_ko.ts \
+    ShinkiFcManager_en.ts
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -50,5 +51,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../HyoLibrary/mingw73_32/lib/ -lxlnt
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../HyoLibrary/mingw73_32/lib/ -lxlntd
 
-INCLUDEPATH += $$PWD/include
-DEPENDPATH += $$PWD/include
+win32:CONFIG(release, debug|release): DESTDIR = $$PWD/../SHINKI-FC-Manager_release
+else:win32:CONFIG(debug, debug|release): DESTDIR = $$PWD/../SHINKI-FC-Manager_debug

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTranslator>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -23,6 +24,14 @@ public:
 private:
     Ui::MainWindow *ui;
 
+    QTranslator m_translator;
+    QTranslator m_translatorQt;
+    QString m_currLang;
+
+    QMenu* m_menuFile;
+    QMenu* m_menuMatch;
+    QMenu* m_menuPlayer;
+    QMenu* m_menuLanguage;
     QMenu* m_menuBoardVerticalHeader;
     QMenu* m_menuBoardHorizontalHeader;
     QMenu* m_menuBoardTable;
@@ -46,7 +55,6 @@ private:
     QAction* m_actionViewMatchDetailsOnBoard;
 
     // player on board
-    QAction* m_actionAddPlayerOnBoard;
     QAction* m_actionRemovePlayerOnBoard;
     QAction* m_actionEditPlayerOnBoard;
     QAction* m_actionMoveLeftPlayerOnBoard;
@@ -61,10 +69,17 @@ private:
 
     BoardModel* m_boardModel;
 
-    void createActions();
     void setupMenus();
+    void createLanguageMenu();
+
+    void loadLanguage(const QString &language);
+    void changeEvent(QEvent *event);
+
+    void retranslateUi();
 
 private slots:
+    void changeLanguage(QAction *action);
+
     void addMatch();
     void removeMatch();
     void removeMatchOnBoard();

@@ -25,6 +25,10 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
+    m_menuFile(NULL),
+    m_menuMatch(NULL),
+    m_menuPlayer(NULL),
+    m_menuLanguage(NULL),
     m_menuBoardVerticalHeader(new QMenu(this)),
     m_menuBoardHorizontalHeader(new QMenu(this)),
     m_menuBoardTable(new QMenu(this)),
@@ -35,6 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_actionViewMatchDetails(NULL),
     m_actionAddPlayer(NULL),
     m_actionRemovePlayer(NULL),
+    m_actionEditPlayer(NULL),
     m_actionRemoveMatchOnBoard(NULL),
     m_actionViewMatchDetailsOnBoard(NULL),
     m_actionRemovePlayerOnBoard(NULL),
@@ -49,8 +54,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    createActions();
     setupMenus();
+    createLanguageMenu();
+
+    QString locale = QLocale::system().name();
+    locale.truncate(locale.lastIndexOf('_'));
+    loadLanguage(locale);
 
     m_boardModel = new BoardModel(m_matchs, m_players);
     ui->tableViewBoard->setModel(m_boardModel);
@@ -76,64 +85,86 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    m_menuBoardTable->clear();
+    delete m_actionCreatePlayDataOnBoard;
+    delete m_actionDeletePlayDataOnBoard;
+
     delete ui;
     delete m_matchs;
     delete m_players;
     delete m_boardModel;
 }
 
-void MainWindow::createActions()
+void MainWindow::setupMenus()
 {
-    // top menu actions
-    // - file
+    // File
+    m_menuFile = menuBar()->addMenu(tr("File"));
+
     m_actionImportExcel = new QAction(tr("Import"), this);
     connect(m_actionImportExcel, SIGNAL(triggered()), this, SLOT(importExcel()));
+    m_menuFile->addAction(m_actionImportExcel);
 
     m_actionExportExcel = new QAction(tr("Export"), this);
     connect(m_actionExportExcel, SIGNAL(triggered()), this, SLOT(exportExcel()));
+    m_menuFile->addAction(m_actionExportExcel);
 
-    // - match
+    // Match
+    m_menuMatch = menuBar()->addMenu(tr("Match"));
+
     m_actionAddMatch = new QAction(tr("Add Match"), this);
     connect(m_actionAddMatch, SIGNAL(triggered()), this, SLOT(addMatch()));
+    m_menuMatch->addAction(m_actionAddMatch);
 
     m_actionRemoveMatch = new QAction(tr("Remove Match"), this);
     connect(m_actionRemoveMatch, SIGNAL(triggered()), this, SLOT(removeMatch()));
+    m_menuMatch->addAction(m_actionRemoveMatch);
 
     m_actionViewMatchDetails = new QAction(tr("View Match Details"), this);
     connect(m_actionViewMatchDetails, SIGNAL(triggered()), this, SLOT(viewMatchDetails()));
+    m_menuMatch->addAction(m_actionViewMatchDetails);
 
-    // - player
+    // Player
+    m_menuPlayer = menuBar()->addMenu(tr("Player"));
+
     m_actionAddPlayer = new QAction(tr("Add Player"), this);
     connect(m_actionAddPlayer, SIGNAL(triggered()), this, SLOT(addPlayer()));
+    m_menuPlayer->addAction(m_actionAddPlayer);
 
     m_actionRemovePlayer = new QAction(tr("Remove Player"), this);
     connect(m_actionRemovePlayer, SIGNAL(triggered()), this, SLOT(removePlayer()));
+    m_menuPlayer->addAction(m_actionRemovePlayer);
 
     m_actionEditPlayer = new QAction(tr("Edit Player"), this);
     connect(m_actionEditPlayer, SIGNAL(triggered()), this, SLOT(editPlayer()));
+    m_menuPlayer->addAction(m_actionEditPlayer);
 
-    // on board actions
-    // - match
+    // board vertical header
     m_actionRemoveMatchOnBoard = new QAction(tr("Remove Match"), this);
     connect(m_actionRemoveMatchOnBoard, SIGNAL(triggered()), this, SLOT(removeMatchOnBoard()));
+    m_menuBoardVerticalHeader->addAction(m_actionRemoveMatchOnBoard);
 
     m_actionViewMatchDetailsOnBoard = new QAction(tr("View Match Details"), this);
     connect(m_actionViewMatchDetailsOnBoard, SIGNAL(triggered()), this, SLOT(viewMatchDetailsOnBoard()));
+    m_menuBoardVerticalHeader->addAction(m_actionViewMatchDetailsOnBoard);
 
-    // - player
-    m_actionRemovePlayerOnBoard = new QAction(tr("Remove Player"), this);
-    connect(m_actionRemovePlayerOnBoard, SIGNAL(triggered()), this, SLOT(removePlayerOnBoard()));
-
-    m_actionEditPlayerOnBoard = new QAction(tr("Edit Player"), this);
-    connect(m_actionEditPlayerOnBoard, SIGNAL(triggered()), this, SLOT(editPlayerOnBoard()));
-
+    // board horizontal header
     m_actionMoveLeftPlayerOnBoard = new QAction(tr("Move Left"), this);
     connect(m_actionMoveLeftPlayerOnBoard, SIGNAL(triggered()), this, SLOT(moveToLeftPlayerOnBoard()));
+    m_menuBoardHorizontalHeader->addAction(m_actionMoveLeftPlayerOnBoard);
 
     m_actionMoveRightPlayerOnBoard = new QAction(tr("Move Right"), this);
     connect(m_actionMoveRightPlayerOnBoard, SIGNAL(triggered()), this, SLOT(moveToRightPlayerOnBoard()));
+    m_menuBoardHorizontalHeader->addAction(m_actionMoveRightPlayerOnBoard);
 
-    // - playdata
+    m_actionEditPlayerOnBoard = new QAction(tr("Edit Player"), this);
+    connect(m_actionEditPlayerOnBoard, SIGNAL(triggered()), this, SLOT(editPlayerOnBoard()));
+    m_menuBoardHorizontalHeader->addAction(m_actionEditPlayerOnBoard);
+
+    m_actionRemovePlayerOnBoard = new QAction(tr("Remove Player"), this);
+    connect(m_actionRemovePlayerOnBoard, SIGNAL(triggered()), this, SLOT(removePlayerOnBoard()));
+    m_menuBoardHorizontalHeader->addAction(m_actionRemovePlayerOnBoard);
+
+    // board table. add/remove in contextmenu()
     m_actionCreatePlayDataOnBoard = new QAction(tr("Create Play Data"), this);
     connect(m_actionCreatePlayDataOnBoard, SIGNAL(triggered()), this, SLOT(createPlayDataOnBoard()));
 
@@ -141,35 +172,127 @@ void MainWindow::createActions()
     connect(m_actionDeletePlayDataOnBoard, SIGNAL(triggered()), this, SLOT(deletePlayDataOnBoard()));
 }
 
-void MainWindow::setupMenus()
+void MainWindow::createLanguageMenu()
 {
-    // menu bar
-    QMenu* fileMenu = menuBar()->addMenu(tr("File"));
-    fileMenu->addAction(m_actionImportExcel);
-    fileMenu->addAction(m_actionExportExcel);
+    m_menuLanguage = menuBar()->addMenu(tr("Language"));
+    QActionGroup* actionGroup = new QActionGroup(m_menuLanguage);
+    connect(actionGroup, SIGNAL(triggered(QAction *)), this, SLOT(changeLanguage(QAction *)));
 
-    QMenu* matchMenu = menuBar()->addMenu(tr("Match"));
-    matchMenu->addAction(m_actionAddMatch);
-    matchMenu->addAction(m_actionRemoveMatch);
-    matchMenu->addAction(m_actionViewMatchDetails);
+    QString defaultLocale = QLocale::system().name();
+    defaultLocale.truncate(defaultLocale.indexOf('_'));
 
-    QMenu* playerMenu = menuBar()->addMenu(tr("Player"));
-    playerMenu->addAction(m_actionAddPlayer);
-    playerMenu->addAction(m_actionRemovePlayer);
-    playerMenu->addAction(m_actionEditPlayer);
+    QString tsFilePath = QString("%1/translations").arg(QApplication::applicationDirPath());
+    QDir dir(tsFilePath);
+    QStringList tsFileNames = dir.entryList(QStringList("ShinkiFcManager_*.qm"));
 
-    // board vertical header
-    m_menuBoardVerticalHeader->addAction(m_actionViewMatchDetailsOnBoard);
-    m_menuBoardVerticalHeader->addAction(m_actionRemoveMatchOnBoard);
+    for( int i = 0; i < tsFileNames.count(); i++ ) {
+        QString locale;
+        locale = tsFileNames.at(i);
+        locale.truncate(locale.lastIndexOf('.'));
+        locale.remove(0, locale.lastIndexOf('_')+1);
 
-    // board horizontal header
-    m_menuBoardHorizontalHeader->addAction(m_actionMoveLeftPlayerOnBoard);
-    m_menuBoardHorizontalHeader->addAction(m_actionMoveRightPlayerOnBoard);
-    m_menuBoardHorizontalHeader->addAction(m_actionEditPlayerOnBoard);
-    m_menuBoardHorizontalHeader->addAction(m_actionRemovePlayerOnBoard);
+        QString language = QLocale::languageToString(QLocale(locale).language());
+        QAction* action = new QAction(language, this);
+        action->setCheckable(true);
+        action->setData(locale);
 
-    // board table
-    //
+        m_menuLanguage->addAction(action);
+        actionGroup->addAction(action);
+
+        if( locale == defaultLocale ) {
+            action->setChecked(true);
+        }
+    }
+}
+
+void MainWindow::loadLanguage(const QString &language)
+{
+    if( m_currLang == language ) { return; }
+    m_currLang = language;
+
+    QLocale locale(language);
+    QLocale::setDefault(locale);
+    QString langName = QLocale::languageToString(locale.language());
+    QString tsFileName;
+
+    tsFileName = QString("%1/translations/ShinkiFcManager_%2.qm")
+            .arg(QApplication::applicationDirPath())
+            .arg(language);
+
+    qApp->removeTranslator(&m_translator);
+    if( m_translator.load(tsFileName) ) {
+        qApp->installTranslator(&m_translator);
+    }
+
+    tsFileName = QString("%1/translations/qt_%2.qm")
+            .arg(QApplication::applicationDirPath())
+            .arg(language);
+
+    qApp->removeTranslator(&m_translatorQt);
+    if( m_translatorQt.load(tsFileName) ) {
+        qApp->installTranslator(&m_translatorQt);
+    }
+}
+
+void MainWindow::changeEvent(QEvent *event)
+{
+    if( event == NULL ) { return; }
+
+    switch( event->type() )
+    {
+    case QEvent::LanguageChange:
+    {
+        ui->retranslateUi(this);
+        this->retranslateUi();
+        break;
+    }
+    case QEvent::LocaleChange:
+    {
+        QString locale = QLocale::system().name();
+        locale.truncate(locale.lastIndexOf('_'));
+        loadLanguage(locale);
+        break;
+    }
+    default:
+        QMainWindow::changeEvent(event);
+    }
+}
+
+void MainWindow::retranslateUi()
+{
+    m_menuFile->setTitle(tr("File"));
+    m_menuMatch->setTitle(tr("Match"));
+    m_menuPlayer->setTitle(tr("Player"));
+    m_menuLanguage->setTitle(tr("Language"));
+
+    m_actionImportExcel->setText(tr("Import"));
+    m_actionExportExcel->setText(tr("Export"));
+
+    m_actionAddMatch->setText(tr("Add Match"));
+    m_actionRemoveMatch->setText(tr("Remove Match"));
+    m_actionViewMatchDetails->setText(tr("View Match Details"));
+
+    m_actionAddPlayer->setText(tr("Add Player"));
+    m_actionRemovePlayer->setText(tr("Remove Player"));
+    m_actionEditPlayer->setText(tr("Edit Player"));
+
+    m_actionRemoveMatchOnBoard->setText(tr("Remove Match"));
+    m_actionViewMatchDetailsOnBoard->setText(tr("View Match Details"));
+
+    m_actionRemovePlayerOnBoard->setText(tr("Remove Player"));
+    m_actionEditPlayerOnBoard->setText(tr("Edit Player"));
+    m_actionMoveLeftPlayerOnBoard->setText(tr("Move Left"));
+    m_actionMoveRightPlayerOnBoard->setText(tr("Move Right"));
+
+    m_actionCreatePlayDataOnBoard->setText(tr("Create Play Data"));
+    m_actionDeletePlayDataOnBoard->setText(tr("Delete Play Data"));
+}
+
+void MainWindow::changeLanguage(QAction *action)
+{
+    if( action == NULL ) { return; }
+
+    loadLanguage(action->data().toString());
 }
 
 void MainWindow::addMatch()
@@ -185,6 +308,7 @@ void MainWindow::addMatch()
     //dialog.layout()->addWidget(new QLabel(tr("Select date")));
 
     QDateEdit* dateEdit = new QDateEdit(QDate::currentDate());
+    dateEdit->setDisplayFormat("yyyy.M.d");
     dateEdit->setCalendarPopup(true);
 
     dialog.layout()->addWidget(dateEdit);
@@ -202,7 +326,35 @@ void MainWindow::addMatch()
 
 void MainWindow::removeMatch()
 {
+    QDialog dialog;
+    dialog.setWindowTitle(tr("SHINKI FC Manager"));
+    QDialogButtonBox buttonBox;
+    buttonBox.setStandardButtons(QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
+    connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
 
+    dialog.setLayout(new QVBoxLayout());
+
+    QListWidget* list = new QListWidget();
+    connect(list, SIGNAL(itemDoubleClicked(QListWidgetItem*)), &dialog, SLOT(accept()));
+    dialog.layout()->addWidget(list);
+    dialog.layout()->addWidget(&buttonBox);
+
+    for( int i = 0; i < m_matchs->count(); i++ ) {
+        list->addItem(new QListWidgetItem(m_matchs->matchAt(i)->Date.toString("yyyy.M.d")));
+    }
+
+    if( dialog.exec() == QDialog::Accepted ) {
+        QList<QListWidgetItem*> selectedItems = list->selectedItems();
+
+        if( selectedItems.count() > 0 ) {
+            QListWidgetItem* item = selectedItems.takeFirst();
+            if( item == NULL ) { return; }
+
+            QDate removeDate = QDate::fromString(item->text(), "yyyy.M.d");
+            m_boardModel->removeMatch(removeDate);
+        }
+    }
 }
 
 void MainWindow::removeMatchOnBoard()
@@ -589,7 +741,7 @@ void MainWindow::boardTableContextMenu(const QPoint &pos)
 
 void MainWindow::importExcel()
 {
-    QString fileName = QFileDialog::getOpenFileName(NULL, "Import", ".", "*.xlsx", NULL, QFileDialog::DontUseNativeDialog);
+    QString fileName = QFileDialog::getOpenFileName(NULL, tr("Import"), ".", "*.xlsx", NULL, QFileDialog::DontUseNativeDialog);
     if( fileName.isEmpty() ) { return; }
 
     Matchs* newMatchs = new Matchs();
@@ -632,7 +784,7 @@ void MainWindow::importExcel()
     if( strTemp != "Date" ) {
         QMessageBox::critical(NULL,
                               tr("Import"),
-                              tr("Document format error") + "\n" + tr("Could not find Date header"),
+                              tr("Document format error") + "\n" + tr("Could not find Date column"),
                               QMessageBox::Close);
 
         delete newMatchs;
@@ -659,7 +811,7 @@ void MainWindow::importExcel()
     if( !valid ) {
         QMessageBox::critical(NULL,
                               tr("Import"),
-                              tr("Document format error") + "\n" + tr("Could not find Goal&Assist header"),
+                              tr("Document format error") + "\n" + tr("Could not find Goal&Assist columns"),
                               QMessageBox::Close);
 
         delete newMatchs;
@@ -748,7 +900,7 @@ void MainWindow::importExcel()
 
 void MainWindow::exportExcel()
 {
-    QString fileName = QFileDialog::getSaveFileName(NULL, "Export", ".", "*.xlsx", NULL, QFileDialog::DontUseNativeDialog);
+    QString fileName = QFileDialog::getSaveFileName(NULL, tr("Export"), ".", "*.xlsx", NULL, QFileDialog::DontUseNativeDialog);
     if( fileName.isEmpty() ) { return; }
     if( !fileName.contains(".xlsx") ) { fileName.append(".xlsx"); }
 
