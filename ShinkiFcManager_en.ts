@@ -18,18 +18,18 @@
     <name>MainWindow</name>
     <message>
         <location filename="mainwindow.ui" line="14"/>
-        <location filename="mainwindow.cpp" line="299"/>
-        <location filename="mainwindow.cpp" line="319"/>
-        <location filename="mainwindow.cpp" line="328"/>
-        <location filename="mainwindow.cpp" line="382"/>
-        <location filename="mainwindow.cpp" line="438"/>
-        <location filename="mainwindow.cpp" line="455"/>
-        <location filename="mainwindow.cpp" line="464"/>
-        <location filename="mainwindow.cpp" line="517"/>
-        <location filename="mainwindow.cpp" line="544"/>
-        <location filename="mainwindow.cpp" line="561"/>
-        <location filename="mainwindow.cpp" line="582"/>
-        <location filename="mainwindow.cpp" line="599"/>
+        <location filename="mainwindow.cpp" line="303"/>
+        <location filename="mainwindow.cpp" line="323"/>
+        <location filename="mainwindow.cpp" line="332"/>
+        <location filename="mainwindow.cpp" line="386"/>
+        <location filename="mainwindow.cpp" line="454"/>
+        <location filename="mainwindow.cpp" line="471"/>
+        <location filename="mainwindow.cpp" line="480"/>
+        <location filename="mainwindow.cpp" line="533"/>
+        <location filename="mainwindow.cpp" line="560"/>
+        <location filename="mainwindow.cpp" line="577"/>
+        <location filename="mainwindow.cpp" line="598"/>
+        <location filename="mainwindow.cpp" line="615"/>
         <source>SHINKI FC Manager</source>
         <translation></translation>
     </message>
@@ -49,140 +49,141 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="102"/>
-        <location filename="mainwindow.cpp" line="266"/>
-        <location filename="mainwindow.cpp" line="742"/>
-        <location filename="mainwindow.cpp" line="768"/>
+        <location filename="mainwindow.cpp" line="105"/>
+        <location filename="mainwindow.cpp" line="270"/>
+        <location filename="mainwindow.cpp" line="758"/>
         <location filename="mainwindow.cpp" line="784"/>
-        <location filename="mainwindow.cpp" line="811"/>
+        <location filename="mainwindow.cpp" line="800"/>
+        <location filename="mainwindow.cpp" line="827"/>
         <source>Import</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="106"/>
-        <location filename="mainwindow.cpp" line="267"/>
-        <location filename="mainwindow.cpp" line="901"/>
+        <location filename="mainwindow.cpp" line="109"/>
+        <location filename="mainwindow.cpp" line="271"/>
+        <location filename="mainwindow.cpp" line="917"/>
         <source>Export</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="113"/>
-        <location filename="mainwindow.cpp" line="269"/>
+        <location filename="mainwindow.cpp" line="116"/>
+        <location filename="mainwindow.cpp" line="273"/>
         <source>Add Match</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="117"/>
-        <location filename="mainwindow.cpp" line="141"/>
-        <location filename="mainwindow.cpp" line="270"/>
-        <location filename="mainwindow.cpp" line="277"/>
+        <location filename="mainwindow.cpp" line="120"/>
+        <location filename="mainwindow.cpp" line="144"/>
+        <location filename="mainwindow.cpp" line="274"/>
+        <location filename="mainwindow.cpp" line="281"/>
         <source>Remove Match</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="121"/>
-        <location filename="mainwindow.cpp" line="145"/>
-        <location filename="mainwindow.cpp" line="271"/>
-        <location filename="mainwindow.cpp" line="278"/>
-        <location filename="mainwindow.cpp" line="405"/>
+        <location filename="mainwindow.cpp" line="124"/>
+        <location filename="mainwindow.cpp" line="148"/>
+        <location filename="mainwindow.cpp" line="275"/>
+        <location filename="mainwindow.cpp" line="282"/>
+        <location filename="mainwindow.cpp" line="409"/>
         <source>View Match Details</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="128"/>
-        <location filename="mainwindow.cpp" line="273"/>
+        <location filename="mainwindow.cpp" line="131"/>
+        <location filename="mainwindow.cpp" line="277"/>
         <source>Add Player</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="132"/>
-        <location filename="mainwindow.cpp" line="162"/>
-        <location filename="mainwindow.cpp" line="274"/>
-        <location filename="mainwindow.cpp" line="280"/>
+        <location filename="mainwindow.cpp" line="135"/>
+        <location filename="mainwindow.cpp" line="165"/>
+        <location filename="mainwindow.cpp" line="278"/>
+        <location filename="mainwindow.cpp" line="284"/>
         <source>Remove Player</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="136"/>
-        <location filename="mainwindow.cpp" line="158"/>
-        <location filename="mainwindow.cpp" line="275"/>
-        <location filename="mainwindow.cpp" line="281"/>
+        <location filename="mainwindow.cpp" line="139"/>
+        <location filename="mainwindow.cpp" line="161"/>
+        <location filename="mainwindow.cpp" line="279"/>
+        <location filename="mainwindow.cpp" line="285"/>
         <source>Edit Player</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="150"/>
-        <location filename="mainwindow.cpp" line="282"/>
+        <location filename="mainwindow.cpp" line="153"/>
+        <location filename="mainwindow.cpp" line="286"/>
         <source>Move Left</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="154"/>
-        <location filename="mainwindow.cpp" line="283"/>
+        <location filename="mainwindow.cpp" line="157"/>
+        <location filename="mainwindow.cpp" line="287"/>
         <source>Move Right</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="167"/>
-        <location filename="mainwindow.cpp" line="285"/>
+        <location filename="mainwindow.cpp" line="170"/>
+        <location filename="mainwindow.cpp" line="289"/>
         <source>Create Play Data</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="170"/>
-        <location filename="mainwindow.cpp" line="286"/>
+        <location filename="mainwindow.cpp" line="173"/>
+        <location filename="mainwindow.cpp" line="290"/>
         <source>Delete Play Data</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="100"/>
-        <location filename="mainwindow.cpp" line="262"/>
+        <location filename="mainwindow.cpp" line="103"/>
+        <location filename="mainwindow.cpp" line="265"/>
         <source>File</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="111"/>
-        <location filename="mainwindow.cpp" line="263"/>
+        <location filename="mainwindow.cpp" line="114"/>
+        <location filename="mainwindow.cpp" line="266"/>
         <source>Match</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="126"/>
-        <location filename="mainwindow.cpp" line="264"/>
+        <location filename="mainwindow.cpp" line="129"/>
+        <location filename="mainwindow.cpp" line="267"/>
         <source>Player</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="176"/>
+        <location filename="mainwindow.cpp" line="179"/>
+        <location filename="mainwindow.cpp" line="268"/>
         <source>Language</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="319"/>
-        <location filename="mainwindow.cpp" line="455"/>
-        <location filename="mainwindow.cpp" line="561"/>
-        <location filename="mainwindow.cpp" line="599"/>
+        <location filename="mainwindow.cpp" line="323"/>
+        <location filename="mainwindow.cpp" line="471"/>
+        <location filename="mainwindow.cpp" line="577"/>
+        <location filename="mainwindow.cpp" line="615"/>
         <source>Already registered</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="406"/>
+        <location filename="mainwindow.cpp" line="410"/>
         <source>No match data</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="785"/>
-        <location filename="mainwindow.cpp" line="812"/>
+        <location filename="mainwindow.cpp" line="801"/>
+        <location filename="mainwindow.cpp" line="828"/>
         <source>Document format error</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="785"/>
+        <location filename="mainwindow.cpp" line="801"/>
         <source>Could not find Date column</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="812"/>
+        <location filename="mainwindow.cpp" line="828"/>
         <source>Could not find Goal&amp;Assist columns</source>
         <translation></translation>
     </message>
@@ -217,6 +218,53 @@
     <message>
         <location filename="MatchDetailDialog.ui" line="91"/>
         <source>Total</source>
+        <translation></translation>
+    </message>
+</context>
+<context>
+    <name>PlayerDetailDialog</name>
+    <message>
+        <location filename="PlayerDetailDialog.ui" line="26"/>
+        <source>Player Details</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="PlayerDetailDialog.ui" line="38"/>
+        <source>Goal average</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="PlayerDetailDialog.ui" line="51"/>
+        <location filename="PlayerDetailDialog.ui" line="100"/>
+        <location filename="PlayerDetailDialog.ui" line="132"/>
+        <location filename="PlayerDetailDialog.ui" line="164"/>
+        <location filename="PlayerDetailDialog.ui" line="196"/>
+        <source>0</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="PlayerDetailDialog.ui" line="71"/>
+        <source>Player Data Empty</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="PlayerDetailDialog.ui" line="87"/>
+        <source>Goals</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="PlayerDetailDialog.ui" line="119"/>
+        <source>Assists</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="PlayerDetailDialog.ui" line="151"/>
+        <source>Appearances</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="PlayerDetailDialog.ui" line="183"/>
+        <source>Assist Average</source>
         <translation></translation>
     </message>
 </context>

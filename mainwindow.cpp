@@ -19,6 +19,7 @@
 #include "BoardItemDelegate.h"
 
 #include "MatchDetailDialog.h"
+#include "PlayerDetailDialog.h"
 
 #include <xlnt/xlnt.hpp>
 
@@ -78,6 +79,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->tableViewBoard->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableViewBoard->horizontalHeader(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(boardHorizontalContextMenu(QPoint)));
+    connect(ui->tableViewBoard->horizontalHeader(), SIGNAL(sectionDoubleClicked(int)), this, SLOT(viewPlayerDetailsOnBoard()));
 
     ui->tableViewBoard->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableViewBoard, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(boardTableContextMenu(QPoint)));
@@ -431,6 +433,20 @@ void MainWindow::viewMatchDetailsOnBoard()
     if( match == NULL ) { return; }
 
     MatchDetailDialog dialog(match, m_players);
+    dialog.exec();
+}
+
+void MainWindow::viewPlayerDetailsOnBoard()
+{
+    QModelIndexList indexList = ui->tableViewBoard->selectionModel()->selectedColumns();
+    if( indexList.isEmpty() ) { return; }
+
+    int column = indexList.first().column();
+
+    const Player* player = m_players->playerAt(column);
+    if( player == NULL ) { return; }
+
+    PlayerDetailDialog dialog(player);
     dialog.exec();
 }
 

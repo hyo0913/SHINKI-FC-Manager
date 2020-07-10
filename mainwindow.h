@@ -87,6 +87,8 @@ private slots:
     void viewMatchDetails();
     void viewMatchDetailsOnBoard();
 
+    void viewPlayerDetailsOnBoard();
+
     void addPlayer();
     void removePlayer();
     void removePlayerOnBoard();

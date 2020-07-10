@@ -24,6 +24,7 @@ SOURCES += \
     Match.cpp \
     MatchDetailDialog.cpp \
     Player.cpp \
+    PlayerDetailDialog.cpp \
     main.cpp \
     mainwindow.cpp
 
@@ -33,10 +34,12 @@ HEADERS += \
     Match.h \
     MatchDetailDialog.h \
     Player.h \
+    PlayerDetailDialog.h \
     mainwindow.h
 
 FORMS += \
     MatchDetailDialog.ui \
+    PlayerDetailDialog.ui \
     mainwindow.ui
 
 TRANSLATIONS += \
